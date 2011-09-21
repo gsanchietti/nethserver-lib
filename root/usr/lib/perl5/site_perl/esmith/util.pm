@@ -1072,7 +1072,7 @@ sub serviceControl
 
     if ( $serviceAction =~ /^(start|stop|restart|reload|graceful|adjust|svdisable)$/ )
     {
-        my ($startScript) = glob("/etc/rc.d/rc7.d/S*$serviceName");
+        my ($startScript) = glob("/etc/rc.d/init.d/$serviceName");
         unless ( -e $startScript )
         {
 		$startScript = "/etc/rc.d/init.d/$serviceName";
