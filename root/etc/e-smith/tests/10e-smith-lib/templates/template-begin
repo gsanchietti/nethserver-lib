@@ -1,3 +1,0 @@
-# This is the beginning of the beginning
-# { keys %$confref == 1 && exists $confref->{Koala_Say}
-         ? "confref ok" : "confref not ok" }

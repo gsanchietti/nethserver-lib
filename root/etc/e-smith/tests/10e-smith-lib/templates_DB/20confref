@@ -1,7 +1,0 @@
-
-{ if( *{confref}{SCALAR} ) {
-    "confref not defined";
-  } else {
-    "confref defined" 
-  }
-}
