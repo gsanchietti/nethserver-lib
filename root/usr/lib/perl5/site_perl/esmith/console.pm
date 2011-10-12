@@ -213,18 +213,10 @@ sub backtitle
 
     my $db = esmith::ConfigDB->open_ro or die "Couldn't open ConfigDB\n";
 
-    my $rel = $db->get_prop('sysconfig', 'ReleaseVersion') || "UNKNOWN";
-    if ($rel eq "UNKNOWN") # initialize database
-    {
-       system("/etc/e-smith/events/actions/initialize-default-databases");
-       system("/etc/e-smith/events/actions/reset-unsavedflag");
-       $db->reload;
-       $rel = $db->get_prop('sysconfig', 'ReleaseVersion');
-    }
-
     sprintf("%-33s%45s",
-    ($db->get_prop('sysconfig', 'ProductName') || "NethServer") . " $rel",
-    "Copyright (C) 2003-2012 nethesis"
+    ($db->get_prop('sysconfig', 'ProductName') || "SME Server") . " " .
+    ($db->get_prop('sysconfig', 'ReleaseVersion') || "UNKNOWN"),
+    "Copyright (C) 2003-2009 nethesis"
     );
 }
 
