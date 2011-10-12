@@ -218,6 +218,7 @@ sub backtitle
     {
        system("/etc/e-smith/events/actions/initialize-default-databases");
        system("/etc/e-smith/events/actions/reset-unsavedflag");
+       $db->reload;
        $rel = $db->get_prop('sysconfig', 'ReleaseVersion');
     }
 
