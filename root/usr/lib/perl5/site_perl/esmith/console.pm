@@ -38,18 +38,19 @@ use vars qw($VERSION @ISA @EXPORT_OK);
 use esmith::util;
 use Locale::gettext;
 use esmith::ConfigDB;
-use esmith::I18N;
+#use esmith::I18N;
 
 @ISA = qw(Exporter);
 
 use constant SCREEN_ROWS => 22;
 use constant SCREEN_COLUMNS => 76;
 use constant CONSOLE_SCREENS => "/sbin/e-smith/console-screens";
+use constant DEBUG => 0;
 
 BEGIN
 {
     # disable CTRL-C
-    $SIG{INT} = 'IGNORE';
+    $SIG{INT} = 'IGNORE' unless (DEBUG == 1);
 
     # Set PATH explicitly and clear related environment variables so that calls
     # to external programs do not cause results to be tainted. See
@@ -73,8 +74,8 @@ sub new
     my $self = {};
     esmith::util::setRealToEffective ();
 
-    my $i18n = new esmith::I18N;
-    $i18n->setLocale("server-console");
+    #my $i18n = new esmith::I18N;
+    #$i18n->setLocale("server-console");
 
     #------------------------------------------------------------
     # Set stdin, stdout and stderr to console
@@ -83,9 +84,9 @@ sub new
     if (defined $ARGV [0])
     {
 	$ARGV[0] =~ /(console|tty\d*)/ && -c "/dev/$1"
-	    or die gettext("Bad ttyname:"), " ", $ARGV[0], "\n";
+	 or die gettext("Bad ttyname:"), " ", $ARGV[0], "\n";
 	my $tty = $1;
-
+	
 	open (STDIN,  "</dev/$tty") or die gettext("Can't redirect stdin"),  ": $!\n";
 	open (STDOUT, ">/dev/$tty") or die gettext("Can't redirect stdout"), ": $!\n";
 
@@ -94,7 +95,7 @@ sub new
 
 	unless ($pid)
 	{
-	    exec qw(/usr/bin/logger -p local1.info -t console);
+    		exec qw(/usr/bin/logger -p local1.info -t console);
 	}
     }
 
@@ -212,10 +213,17 @@ sub backtitle
 
     my $db = esmith::ConfigDB->open_ro or die "Couldn't open ConfigDB\n";
 
+    my $rel = $db->get_prop('sysconfig', 'ReleaseVersion') || "UNKNOWN";
+    if ($rel eq "UNKNOWN") # initialize database
+    {
+       system("/etc/e-smith/events/actions/initialize-default-databases");
+       system("/etc/e-smith/events/actions/reset-unsavedflag");
+       $rel = $db->get_prop('sysconfig', 'ReleaseVersion');
+    }
+
     sprintf("%-33s%45s",
-    ($db->get_prop('sysconfig', 'ProductName') || "SME Server") . " " .
-    ($db->get_prop('sysconfig', 'ReleaseVersion') || "UNKNOWN"),
-    "Copyright (C) 2003-2009 nethesis"
+    ($db->get_prop('sysconfig', 'ProductName') || "NethServer") . " $rel",
+    "Copyright (C) 2003-2012 nethesis"
     );
 }
 
