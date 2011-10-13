@@ -1070,43 +1070,36 @@ sub serviceControl
         die "serviceControl: ACTION must be specified";
     }
 
-    if ( $serviceAction =~ /^(start|stop|restart|reload|graceful|adjust|svdisable)$/ )
+    my ($startScript) = glob("/etc/rc.d/init.d/$serviceName");
+    unless ( -e $startScript )
     {
-        my ($startScript) = glob("/etc/rc.d/init.d/$serviceName");
-        unless ( -e $startScript )
-        {
-		$startScript = "/etc/rc.d/init.d/$serviceName";
-		unless ( -e $startScript) {
-			warn "serviceControl: startScript not found "
-        	      . "for service $serviceName\n";
+	$startScript = "/etc/rc.d/init.d/$serviceName";
+	unless ( -e $startScript) {
+		warn "serviceControl: startScript not found "
+              	. "for service $serviceName\n";
             		return 0;
-		}
-        }
+	}
+   }
 
-        my $background = $params{'BACKGROUND'} || 'false';
+   my $background = $params{'BACKGROUND'} || 'false';
 
-        if ( $background eq 'true' )
+   if ( $background eq 'true' )
+   {
+        backgroundCommand( 0, $startScript, $serviceAction );
+   }
+   elsif ( $background eq 'false' )
+   {
+        unless ( system( $startScript, $serviceAction ) == 0 )
         {
-            backgroundCommand( 0, $startScript, $serviceAction );
+            warn "serviceControl: "
+              . "Couldn't system($startScript, $serviceAction): $!\n";
+            return 0;
         }
-        elsif ( $background eq 'false' )
-        {
-            unless ( system( $startScript, $serviceAction ) == 0 )
-            {
-                warn "serviceControl: "
-                  . "Couldn't system($startScript, $serviceAction): $!\n";
-                return 0;
-            }
-        }
-        else
-        {
-            die "serviceControl: Unsupported BACKGROUND=>$background";
-        }
-    }
-    else
-    {
-        die "serviceControl: Unknown serviceAction $serviceAction";
-    }
+   }
+   else
+   {
+        die "serviceControl: Unsupported BACKGROUND=>$background";
+   }
     return 1;
 }
 
