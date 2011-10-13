@@ -247,9 +247,9 @@ sub hosts_allow_spec
       or return
       "# '$service_name' is not defined in the configuration database";
 
-    my $status = $service->prop('status') || "disabled";
-    return "# '$service_name' is disabled in the configuration database"
-      unless ( $status eq "enabled" );
+    my $status = system(("/sbin/chkconfig", $daemon));
+    return "# '$daemon' is disabled"
+      unless ( $status == 0 );
 
     my $access = $service->prop('access') || "private";
 
