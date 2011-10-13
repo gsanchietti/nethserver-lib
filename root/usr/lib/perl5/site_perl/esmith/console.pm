@@ -38,7 +38,7 @@ use vars qw($VERSION @ISA @EXPORT_OK);
 use esmith::util;
 use Locale::gettext;
 use esmith::ConfigDB;
-#use esmith::I18N;
+use esmith::I18N;
 
 @ISA = qw(Exporter);
 
@@ -74,8 +74,8 @@ sub new
     my $self = {};
     esmith::util::setRealToEffective ();
 
-    #my $i18n = new esmith::I18N;
-    #$i18n->setLocale("server-console");
+    my $i18n = new esmith::I18N;
+    $i18n->setLocale("server-console");
 
     #------------------------------------------------------------
     # Set stdin, stdout and stderr to console
