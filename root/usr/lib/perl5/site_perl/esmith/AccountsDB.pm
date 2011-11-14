@@ -395,7 +395,7 @@ sub underbar_pseudonym {
 
 =head2 $a->activeUsers()
 
-Returns the number of active users, ie, accounts which have passwords set and
+Returns the number of active users, ie, accounts which have passwords set, lock prop is false and
 are of type 'user'.
 
 =begin testing
@@ -413,7 +413,7 @@ sub activeUsers()
     my @users = $self->users();
 
     return unless @users;
-    return grep { $_->prop("PasswordSet") eq 'yes' } @users;
+    return grep { ($_->prop("PasswordSet") eq 'yes' || !defined($_->prop("Lock")) || $_->prop("Lock") eq 'no') } @users;
 }
 
 =head2 get_next_uid
