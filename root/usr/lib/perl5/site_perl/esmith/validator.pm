@@ -13,7 +13,7 @@ use File::Temp qw/ :mktemp /;
 use esmith::ConfigDB;
 use POSIX;
 
-use constant DEBUG => 1;
+use constant DEBUG => 0;
 
 
 =pod
