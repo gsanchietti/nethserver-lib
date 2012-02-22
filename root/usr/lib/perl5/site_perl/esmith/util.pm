@@ -707,125 +707,6 @@ sub setUnixPasswordRequirePrevious ($$$)
 
 =pod
 
-=head2 setSambaPassword($username, $password)
-
-Set Samba password
-
-=cut
-
-sub setSambaPassword ($$)
-{
-    my ( $username, $password ) = @_;
-
-    #----------------------------------------
-    # then set the password
-    #----------------------------------------
-
-    my $smbPasswdProg = '/usr/bin/smbpasswd';
-
-    # see perldoc perlipc (search for 'Safe Pipe Opens')
-    my $pid = open( DISCARD, "|-" );
-
-    if ($pid)    # parent
-    {
-        print DISCARD "$password\n$password\n";
-        close(DISCARD) || die "Child exited early.";
-    }
-    else         # child
-    {
-        my $retval = system("$smbPasswdProg -a -s $username >/dev/null");
-        ( $retval / 256 )
-          && die "Failed to set Samba password for account $username.\n";
-        exit 0;
-    }
-    # Now we enable the account
-    return system("$smbPasswdProg -e $username >/dev/null") ? 0 : 1;
-}
-
-=pod
-
-=head2 cancelSambaPassword($username)
-
-Cancel Samba password
-
-=cut
-
-sub cancelSambaPassword ($)
-{
-    my ($username) = @_;
-
-    #----------------------------------------
-    # Gordon Rowell <gordonr@e-smith.com> June 7, 2000
-    # We really should maintain old users, which would mean we can just use
-    # smbpasswd -d, but the current policy is to remove them. If we are
-    # doing that (see below), there is no need to disable them first.
-    #----------------------------------------
-    #    my $discard = `/usr/bin/smbpasswd -d -s $username`;
-    #    if ($? != 0)
-    #    {
-    #   die "Failed to disable Samba account $username.\n";
-    #    }
-
-    #----------------------------------------
-    # Delete the smbpasswd entry. If we don't, re-adding the same
-    # username will result in a mismatch of UIDs between /etc/passwd
-    # and /etc/smbpasswd
-    #----------------------------------------
-    # Michael Brader <mbrader@stoic.com.au> June 2, 2000
-    # We have a locking problem here.
-    # If two copies of this are run at once you could see your entry reappear
-    # Proposed solution (file locking):
-
-    # If we do a 'use Fcntl, we'll probably get the locking constants
-    # defined, but for now:
-
-    # NB. hard to test
-
-    my $LOCK_EX = 2;
-    my $LOCK_UN = 8;
-
-    my $smbPasswdFile = '/etc/samba/smbpasswd';
-
-    open( RDWR, "+<$smbPasswdFile" ) ||    # +< == fopen(path, "r+",...
-      die "Cannot open file $smbPasswdFile: $!\n";
-
-    my $nolock = 1;
-    my $attempts;
-    for ( $attempts = 1 ; ( $attempts <= 5 && $nolock ) ; $attempts++ )
-    {
-        if ( flock( RDWR, $LOCK_EX ) )
-        {
-            $nolock = 0;
-        }
-        else
-        {
-            sleep $attempts;
-        }
-    }
-
-    $nolock && die "Could not get exclusive lock on $smbPasswdFile\n";
-
-    my $outputString = '';
-    while (<RDWR>)
-    {
-        (/^$username:/) || ( $outputString .= $_ );
-    }
-
-    # clear file and go to beginning
-    truncate( RDWR, 0 ) || die "truncate failed";    # not 'strict' safe why???
-    seek( RDWR, 0, 0 ) || die "seek failed";
-    print RDWR $outputString;
-    flock( RDWR, $LOCK_UN )
-      || warn "Couldn't remove exclusive lock on $smbPasswdFile\n";
-    close RDWR || die "close failed";
-
-    chmod 0600, $smbPasswdFile;
-
-    return 1;                                        # success
-}
-
-=pod
-
 =head2 LdapPassword()
 
 Returns the LDAP password from the file C</etc/openldap/ldap.pw>.
@@ -933,8 +814,6 @@ Set the samba administrator password.
 sub setServerSystemPassword ($)
 {
     my ($password) = @_;
-
-    setSambaPassword( "admin", $password );
 }
 
 =pod
@@ -950,7 +829,6 @@ sub setUserPassword ($$)
     my ( $username, $password ) = @_;
 
     setUnixPassword( $username, $password );
-    setSambaPassword( $username, $password );
 }
 
 =pod
@@ -978,9 +856,6 @@ sub setUserPasswordRequirePrevious ($$$)
       setUnixPasswordRequirePrevious( $username, $oldpassword, $newpassword );
     $< = $uid;
     return 0 unless $ret;
-
-    # if we get this far, the old password must have been valid
-    setSambaPassword( $username, $newpassword );
 }
 
 =pod
@@ -998,8 +873,6 @@ entry.
 sub cancelUserPassword ($)
 {
     my ($username) = @_;
-
-    cancelSambaPassword($username);
 }
 
 =pod
