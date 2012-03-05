@@ -1,0 +1,38 @@
+#!/usr/bin/perl 
+
+use strict;
+use Authen::PAM;
+use POSIX qw(ttyname);
+
+my ($pamh, $res);
+our $userName = <STDIN>;
+
+chomp($userName);
+
+ref($pamh = new Authen::PAM('login', $userName, \&my_conv_func))
+|| die "Error code $pamh during PAM init!";
+
+$pamh->pam_set_item(PAM_TTY(), ttyname(fileno(STDIN)));
+$res = $pamh->pam_authenticate();
+exit 1 unless $res == PAM_SUCCESS();
+exit 0;
+
+sub my_conv_func {
+   my @res;
+   while ( @_ ) {
+      my $code = shift;
+      my $msg = shift;
+      my $ans = "";
+
+      if ($code == PAM_PROMPT_ECHO_ON() ) {
+        $ans = $userName;
+      } elsif ($code == PAM_PROMPT_ECHO_OFF() ) {
+        $ans = <STDIN>;
+        chomp($ans);      
+      }
+     
+      push @res, (PAM_SUCCESS(),$ans);
+   }
+   push @res, PAM_SUCCESS();
+   return @res;
+}
