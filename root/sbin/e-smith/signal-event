@@ -8,7 +8,7 @@
 
 use strict;
 use Getopt::Long;
-use esmith::event;
+use NethServer::Event;
 
 my $usage = "usage:
     $0 eventname [arg1 [arg2...]]
@@ -17,7 +17,7 @@ my $usage = "usage:
 my ($event, @args) = @ARGV;
 die $usage unless $event;
 
-my $exitcode = event_signal($event, @args);
+my $exitcode = NethServer::Event::signal($event, @args);
 
 # reverse exitcode for command-line usage
 exit ($exitcode ? 0 : 1);
