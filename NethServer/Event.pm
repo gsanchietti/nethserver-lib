@@ -152,7 +152,7 @@ sub signal
 {
     if(queue_is_enabled()) {
 	queue_add(@_);
-	return 0;
+	return 1;
     } else {
 	return event_signal(@_);
     }
