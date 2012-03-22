@@ -28,7 +28,7 @@ sub start
     if ( $? != 0 ) {
 	qx($service $daemon start);
     }
-    return $?;
+    return ($? == 0 ? 1 : 0);
 }
 
 1;
