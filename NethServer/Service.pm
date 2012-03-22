@@ -10,7 +10,7 @@ use strict;
 
 =head1 NAME
 
-NethServer::Servicem module
+NethServer::Service module
 
 =cut
 
