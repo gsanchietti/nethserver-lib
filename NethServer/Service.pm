@@ -42,17 +42,18 @@ Check if $daemon is enabled in the current runlevel.
   }
 
 =cut
-sub is_enabled($daemon)
+sub is_enabled
 {
+    my $daemon = shift;
     my $configurationDb = esmith::ConfigDB->open_ro();
     my $status = $configurationDb->get_prop($daemon, 'status') || 'unknown';
-    my %runlevels = map { $_ => 1 } split(',' $configurationDb->get_prop($daemon, 'Runlevels'));
+    my %runlevels = map { $_ => 1 } split(',', $configurationDb->get_prop($daemon, 'Runlevels'));
 
     my $currentRunlevel = qx('/sbin/runlevel');
     chomp($currentRunlevel);
     $currentRunlevel = [split(' ', $currentRunlevel)]->[1];
 
-    if(%runlevels{$currentRunlevel} == 1) {
+    if( $runlevels{$currentRunlevel} == 1 ) {
 	return 1;
     }
 
