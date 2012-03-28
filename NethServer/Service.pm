@@ -67,6 +67,11 @@ sub is_enabled
     my $daemon = shift;
     my $configurationDb = esmith::ConfigDB->open_ro();
     my $status = $configurationDb->get_prop($daemon, 'status') || 'unknown';
+
+    if($status ne 'enabled') {
+	return 0;
+    }
+
     my %runlevels = map { $_ => 1 } split(',', $configurationDb->get_prop($daemon, 'Runlevels'));
 
     my $currentRunlevel = qx('/sbin/runlevel');
