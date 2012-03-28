@@ -33,6 +33,26 @@ sub start
 }
 
 
+=head2 stop($daemon)
+    
+Stop $daemon if it is running
+
+=cut
+sub stop
+{
+    my $service = '/sbin/service';
+    my $daemon = shift;
+
+    qx($service $daemon status >/dev/null);
+    if ( $? != 0 ) {
+	return 0;
+    } 
+
+    qx($service $daemon stop);
+    return ($? == 0 ? 1 : 0);
+}
+
+
 =head2 is_enabled($daemon)
 
 Check if $daemon is enabled in the current runlevel. 
