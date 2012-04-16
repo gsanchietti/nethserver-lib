@@ -9,6 +9,7 @@
 use strict;
 use Getopt::Long;
 use NethServer::Event;
+use Env qw(LANG LANGUAGE);
 
 my $usage = "usage:
     $0 eventname [arg1 [arg2...]]
@@ -16,6 +17,15 @@ my $usage = "usage:
 
 my ($event, @args) = @ARGV;
 die $usage unless $event;
+
+#
+# Reset locale settings - see man setlocale(3) - Refs #973
+#
+$LANG='en_US.utf8';
+delete $ENV{LANGUAGE};
+delete $ENV{$_} foreach grep(m/^LC_.+/, keys %ENV);
+
+warn qx(env);
 
 my $exitcode = NethServer::Event::signal($event, @args);
 
