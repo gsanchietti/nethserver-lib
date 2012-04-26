@@ -214,9 +214,9 @@ sub backtitle
     my $db = esmith::ConfigDB->open_ro or die "Couldn't open ConfigDB\n";
 
     sprintf("%-33s%45s",
-    ($db->get_prop('sysconfig', 'ProductName') || "SME Server") . " " .
-    ($db->get_prop('sysconfig', 'ReleaseVersion') || "UNKNOWN"),
-    "Copyright (C) 2003-2009 nethesis"
+    ($db->get_prop('sysconfig', 'ProductName') || "NethServer") . " " .
+    ($db->get_prop('sysconfig', 'ReleaseVersion') || ''),
+    $db->get_prop('sysconfig', 'Copyright') || "Copyright (C) 2003-2012 Nethesis srl"
     );
 }
 
