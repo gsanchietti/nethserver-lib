@@ -9,7 +9,7 @@ package esmith::I18N;
 use strict;
 
 use esmith::ConfigDB;
-use POSIX qw(setlocale LC_ALL LC_CTYPE);
+use POSIX qw();
 use Locale::gettext;
 use I18N::AcceptLanguage;
 use I18N::LangTags qw(is_language_tag locale2language_tag);
@@ -161,10 +161,10 @@ sub setLocale()
     $ENV{'LANGUAGE'} = $locale;
     $ENV{'LANG'}     = $ENV{'LANGUAGE'};
 
-    setlocale(LC_MESSAGES, $locale);
-    setlocale(LC_MESSAGES, $locale);
-    setlocale(LC_ALL, $locale);
-    setlocale(LC_ALL, $locale);
+    POSIX::setlocale(POSIX::LC_MESSAGES, $locale);
+    POSIX::setlocale(POSIX::LC_MESSAGES, $locale);
+    POSIX::setlocale(POSIX::LC_ALL, $locale);
+    POSIX::setlocale(POSIX::LC_ALL, $locale);
 
     bindtextdomain ($text_domain, "/usr/share/locale");
     textdomain ($text_domain);
