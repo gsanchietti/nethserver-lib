@@ -108,9 +108,9 @@ sub manage_add
     foreach(@_) {
 	my $serviceRecord = $configDb->get($_);
 
-	if($configDb->prop('type') eq 'service') {	    
+	if($serviceRecord->prop('type') eq 'service') {	    
 	    my %packageMap = map { $_ ne '' ? ($_ => 1) : () } split(',', $serviceRecord->prop('managedBy')), $packageName;
-	    $configDb->set_prop('managedBy', join(',', keys %packageMap));
+	    $serviceRecord->set_prop('managedBy', join(',', keys %packageMap));
 	} else {
 	    warn "Unknown service key: $_, skipping";
 	}
@@ -133,9 +133,9 @@ sub manage_remove
 
     foreach(@_) {
 	my $serviceRecord = $configDb->get($_);
-	if($configDb->prop('type') eq 'service') {	    
+	if($serviceRecord->prop('type') eq 'service') {	    
 	    my @packageList = grep { $_ ne $packageName && $_ ne '' } split(',', $serviceRecord->prop('managedBy'));
-	    $configDb->set_prop('managedBy', join(',', @packageList));
+	    $serviceRecord->set_prop('managedBy', join(',', @packageList));
 	} else {
 	    warn "Unknown service key: $_, skipping";
 	}
