@@ -7,8 +7,8 @@
 #----------------------------------------------------------------------
 
 use strict;
-use Getopt::Long;
-use esmith::validator;
+use NethServer::Validation;
+
 
 my $usage = "usage:
     $0 validatorname [arg1 [arg2...]]
@@ -17,7 +17,7 @@ my $usage = "usage:
 my ($validator, @args) = @ARGV;
 die $usage unless $validator;
 
-my $exitcode = validate($validator, @args);
+my $success = NethServer::Validation::validate($validator, @args);
 
-exit ($exitcode);
+exit ($success ? 0 : 1)
 

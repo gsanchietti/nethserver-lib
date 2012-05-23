@@ -4,56 +4,56 @@
 # modify it under the same terms as Perl itself.
 #----------------------------------------------------------------------
 
-package esmith::validator;
+package NethServer::Validation;
 
 use strict;
-use Exporter;
-use File::Basename;
-use File::Temp qw/ :mktemp /;
-use esmith::ConfigDB;
-use POSIX;
-
 use constant DEBUG => 0;
-
+use File::Basename;
 
 =pod
 
-=head1 NAME
+=head1 NethServer::Validation
 
-esmith::validator - Routines for handling system-wide validators
+Routines for handling system-wide validators
 
-=head1 SYNOPSIS
+=head2 Example
 
-    use esmith::validator;
+    use NethServer::Validation;
 
-    my $exitcode = validate($validator, @args);
+    my $exitcode = NethServer::Validation::validate($validator, @args);
 
-=head1 DESCRIPTION
+=head1 validate()
 
-Validator uses bash exit values behaviour: 0 for success, 1 otherwise
-Like esmith::event, validator search for all validators inside '/etc/e-smith/validators' directory and executes all scripts.
-A success validation occurs when all scripts return 0 (success validation) or at least one script returns 2 (sufficient valid condition). 
+Searches for all validator scripts inside the validator directory,
+'/etc/e-smith/validators' then executes them.
 
-Validator directory contains a variable name of scripts. Each script must return one of these exit values:
+A successful validation occurs when all scripts return 0 (success
+validation) or at least one script returns 2 (sufficient valid
+condition). Otherwise validation fails.
 
-  0: successfull validation
+Each script in the validator directory must return one of these exit
+values:
 
-  1: validation failed
+  0: successful validation
 
-  2: sufficient validation
+  1: validation failed (generic)
 
-When a script returns 2 (sufficient validation) no further script will be processed.
+  2: sufficient validation (successful)
+
+  3..255: failed with specific reason
+
+When a script returns 2 (sufficient validation) no further script will
+be processed and the validate() is successful.
+
+Scripts are not supposed to generate error messages under normal
+conditions, so we do not provide a mechanism for validator handlers to
+signal errors to the user. Errors can only be written to the log file.
+
+=head2 Return value
+
+The validate() function returns 0 on failure, 1 on success.
 
 =cut
-
-our $VERSION = sprintf '%d.%03d', q$Revision: 0.1 $ =~ /: (\d+).(\d+)/;
-our @ISA         = qw(Exporter);
-our @EXPORT      = qw(validate);
-
-our @EXPORT_OK   = ();
-our %EXPORT_TAGS = ();
-our $return_value = undef;
-
 
 sub validate
 {
@@ -84,7 +84,7 @@ sub validate
     # for validator handlers to signal errors to the user. Errors can
     # only be written to the log file.
     #------------------------------------------------------------
-    debug("Processing validator: $validator @args");
+    debug("validate(): processing validator $validator @args");
 
     #------------------------------------------------------------
     # Run handlers, logging all output.
@@ -101,40 +101,50 @@ sub validate
         my $status = 0;
         if (-x $filename)
         {
-            debug("Running validator handler: $filename");
+            debug("validate(): running handler `$filename`");
 
             system($filename, @args);
             $status = $? >> 8; # real exit value is shifted right by eight
-            debug("$filename: $status");
+
             if ($status == 0) # VALID
             {
-            } elsif ($status == 1) # NOT VALID
-            {
-                # if any handler fails, the entire validator fails
-                debug("INVALID");
-                return 1;
-            } elsif ($status == 2) # SUFFICIENT
-            {
-                debug("SUFFICIENT");
-                return 0;
+		debug("validate(): VALID $filename");
+		next;
             }
+	    elsif ($status == 2) # SUFFICIENT
+            {
+                debug("validate(): SUFFICIENT $filename - SUCCESS");
+                return 1; # SUCCESS
+            }
+	    else 
+	    {
+                # if any handler fails, the entire validator fails
+                debug("validate(): INVALID $filename $status - FAILED");	       
+
+		if(-l $filename) {
+		    $filename = readlink $filename;
+		}	       		
+
+		print join(',', $validator, basename($filename), $status) . "\n";
+                return 0; # FAILED
+	    }
         }
         else
         {
-            debug("Skipping non-executable validator handler: $filename");
+            debug("validate(): Skipping non-executable validator handler `$filename`");
 	    next;
         }
 
     }
 
-    debug("validate: $exitcode");
-    return $exitcode;
+    debug("validate: SUCCESS");
+    return 1; # SUCCESS -DEFAULT
 }
 
 sub debug
 {
     my $msg = shift;
-    print "DEBUG: $msg\n" if DEBUG;
+    warn "[DEBUG] $msg\n" if DEBUG;
 }
 
 1;
