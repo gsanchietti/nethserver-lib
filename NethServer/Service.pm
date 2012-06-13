@@ -25,9 +25,9 @@ sub start
     my $service = '/sbin/service';
     my $daemon = shift;
 
-    qx($service $daemon status >/dev/null);
+    qx($service $daemon status >/dev/null 2>&1);
     if ( $? != 0 ) {
-	qx($service $daemon start);
+	qx($service $daemon start >/dev/null 2>&1);
     }
     return ($? == 0 ? 1 : 0);
 }
@@ -43,12 +43,12 @@ sub stop
     my $service = '/sbin/service';
     my $daemon = shift;
 
-    qx($service $daemon status >/dev/null);
+    qx($service $daemon status >/dev/null 2>&1);
     if ( $? != 0 ) {
 	return 0;
     } 
 
-    qx($service $daemon stop);
+    qx($service $daemon stop >/dev/null 2>&1);
     return ($? == 0 ? 1 : 0);
 }
 
