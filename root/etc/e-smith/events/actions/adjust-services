@@ -31,33 +31,6 @@ my $dh = DirHandle->new("services2adjust");
 exit(0) unless $dh; # Nothing to do
 
 use esmith::ConfigDB;
-use esmith::util;
-
-my %param2char = (
-	down => 'd',
-	stop => 'd',
-	up => 'u',
-	start => 'u',
-	restart => 't',
-	sigterm => 't',
-	adjust => 'h',
-	reload => 'h',
-	sighup => 'h',
-	sigusr1 => '1',
-	sigusr2 => '2',
-	once => 'o',
-	pause => 'p',
-	alarm => 'a',
-	interrupt => 'i',
-	quit => 'q',
-	kill => 'k',
-	exit => 'x',
-    );
-
-sub adjust_supervised_service
-{
-    warn 'adjust_supervised_service is no longer supported in NethServer';
-}
 
 my $conf = esmith::ConfigDB->open_ro || die "Couldn't open config db";
 
@@ -97,11 +70,9 @@ foreach my $service (grep { !/^\./ } $dh->read())
     foreach (@actions)
     {
 	warn "adjusting service $service ($_)\n";
-	esmith::util::serviceControl(
-	    NAME => $service,
-	    ACTION => $_,
-	    );
+	system('/sbin/service', $service, $_);	
     }
 
 }
 
+exit 0;

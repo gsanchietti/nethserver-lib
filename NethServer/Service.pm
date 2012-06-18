@@ -27,7 +27,7 @@ sub start
 
     qx($service $daemon status >/dev/null 2>&1);
     if ( $? != 0 ) {
-	qx($service $daemon start >/dev/null 2>&1);
+	qx($service $daemon start);
     }
     return ($? == 0 ? 1 : 0);
 }
