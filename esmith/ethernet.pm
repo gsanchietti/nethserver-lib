@@ -37,22 +37,34 @@ Query udev for all devices
 
 sub listDevices ()
 {
-    open("UDEV", "/sbin/udevadm info --export-db|");
     my @list;
-    my $dev;
-    while (my $line = <UDEV>) {
-       chomp($line);
-       if($line =~ /^P: (.*)/)
-       {
-           push (@list, $dev);
-           $dev = {};
-           $dev->{'name'} = $1;
-       } elsif ($line =~ /^E: (.*)=(.*)/) {
-           $dev->{$1} = $2;
-       }
-    }
-    close (UDEV);
+    my @files = </sys/class/net/*/device/uevent>;
+    foreach my $file  (@files)
+    {
+        my %dev;
+        my @path = split(/\//,$file);
+        $dev{'INTERFACE_NAME'} = $path[4];
+        open FILE, "<", $file;
+        while (<FILE>) {
+            $_ =~ s/\s+$//; #rstrip
+            my ($key, $value) = split(/=/,$_);
+            next unless ($key eq 'DRIVER');
+            $dev{'ID_MODEL_FROM_DATABASE'} = $value;
+        }
+        close FILE;
 
+        $file = sprintf "/sys/class/net/%s/address", $dev{'INTERFACE_NAME'};
+        local $/ = undef;
+        open FILE,  $file;
+        binmode FILE;
+        my $tmp = <FILE>;
+        $tmp =~ s/\s+$//;
+        $dev{'MATCHADDR'} = $tmp;
+        close FILE;
+
+        push(@list,\%dev);
+    }
+    
     return @list;
 }
 
@@ -72,12 +84,9 @@ sub probeAdapters ()
     my @devs = listDevices();
     my $index = 1;
     foreach my $nic (@devs) {
-        if($nic->{'SUBSYSTEM'} eq "net" && $nic->{'INTERFACE'} ne 'lo' ) 
-        {
-          $adapters .=
-          "EthernetDriver" . $index++ . "\t" . $nic->{INTERFACE_NAME} . "\t"
-          . $nic->{'MATCHADDR'} . "\t" . $nic->{ID_MODEL_FROM_DATABASE} . "\n";
-        }
+        $adapters .=
+          "EthernetDriver" . $index++ . "\t" . $nic->{'INTERFACE_NAME'} . "\t"
+          . $nic->{'MATCHADDR'} . "\t" . $nic->{'ID_MODEL_FROM_DATABASE'} . "\n";
     }
     return $adapters;
 }
