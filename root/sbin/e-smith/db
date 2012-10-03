@@ -33,12 +33,23 @@ my %commands = (
 		    'function'	=>	\&DB_show,
 		    'usage'	=>	"$0 dbfile show [key]",
 		},
+        'showjson'
+            =>  {
+                    'function'  =>      \&DB_show_json,
+                    'usage'     =>      "$0 dbfile showjson [key]",
+                },
 
 	'get'
 	    =>	{
 		    'function'	=>	\&DB_get,
 		    'usage'	=>	"$0 dbfile get key",
 		},
+
+        'getjson'
+            =>  {
+                    'function'  =>      \&DB_get_json,
+                    'usage'     =>      "$0 dbfile getjson key",
+                },
 
 	'set'
 	    =>	{
@@ -115,7 +126,9 @@ my $usage = "usage:
     $commands{'keys'}{'usage'}
     $commands{'print'}{'usage'}
     $commands{'show'}{'usage'}
+    $commands{'showjson'}{'usage'}
     $commands{'get'}{'usage'}
+    $commands{'getjson'}{'usage'}
     $commands{'set'}{'usage'}
     $commands{'setdefault'}{'usage'}
     $commands{'delete'}{'usage'}
@@ -191,6 +204,21 @@ sub DB_show
     }
 }
 
+sub DB_show_json
+{
+    my $key = shift;
+
+    if (defined $key)
+    {
+        $db->show_json($key) ? exit 0 : exit 1;
+    }
+    else
+    {
+        $db->show_json() ? exit 0 : exit 1;
+    }
+}
+
+
 sub DB_get
 {
     my $key = shift;
@@ -200,6 +228,17 @@ sub DB_get
     exit 1 unless defined $value;
     print "$value\n" if defined $value;
 }
+
+sub DB_get_json
+{
+    my $key = shift;
+    die "$commands{'get'}{'usage'}\n" unless $key;
+
+    my $value = $db->get_json($key);
+    exit 1 unless defined $value;
+    print "$value\n" if defined $value;
+}
+
 
 sub DB_set
 {

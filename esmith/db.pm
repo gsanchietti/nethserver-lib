@@ -162,6 +162,43 @@ sub db_get
     return wantarray() ? _db_string_to_type_and_hash($value) : $value;
 }
 
+=head2 B<db_get_json>
+
+    my($type, %properties) = db_get(\%config, $key);
+    my $raw_value  = db_get(\%config, $key);
+    my @keys       = db_get(\%config);
+
+Reads the $type and %properties for the given $key in %config.
+
+It return a json object in the form:
+{
+    name: key name,
+    type: key type,
+    props: array_of:properties
+}
+
+=cut
+
+sub db_get_json
+{
+    use JSON;
+    my %tmp;
+    my %properties;
+    my $json;
+    my ($hash, $key) = @_;
+
+    return sort keys %$hash unless defined $key;
+    return undef unless exists $$hash{$key};
+    $tmp{'name'} = $key;
+    $tmp{'type'} = db_get_type($hash, $key);
+    $tmp{'props'} = \%properties;
+    %properties = db_get_prop($hash, $key);
+    $json = to_json(\%tmp, {utf8 => 1});
+    return $json;
+}
+
+
+
 =item B<db_delete>
 
   db_delete(\%config, $key)
@@ -403,6 +440,76 @@ sub db_show
     return 1;
 }
 
+=item B<db_show_json>
+
+  db_show_json(\%config);
+  db_show_json(\%config, $key);
+
+Prints out keys and their values in a JSON pretty printed format.
+
+If $key is given it prints out the $key, type and properties of that
+$key.  Otherwise it prints out the key, type and properties for all
+keys.
+
+=cut
+
+
+sub db_show_json {
+    use JSON;
+    my ($hash, $key) = @_;
+
+    my @list;
+    my %tmp;
+    my $json;
+    my $type;
+    my @ret;
+
+    if (defined $key)
+    {
+        return undef unless defined db_get($hash, $key);
+        @list = ($key);
+    }
+    else
+    {
+        @list = db_get($hash) unless defined $key;
+    }
+
+    return undef unless scalar @list;
+    
+    foreach (@list)
+    {
+        $tmp{'name'} = $_;
+        my $type = db_get_type($hash, $_);
+
+        if (defined $type)
+        {
+            $tmp{'type'} =  $type;
+        }
+        else
+        {
+            next;
+        }
+
+        my %properties = db_get_prop($hash, $_);
+        next unless scalar keys %properties;
+        $tmp{'props'} = \%properties;
+        push(@ret,\%tmp);
+    }
+
+    if (defined $key)
+    {
+        $json = to_json(\%tmp, {utf8 => 1, pretty => 1}); # avoid to generate an array with only one element
+    } 
+    else 
+    {
+        $json = to_json(\@ret, {utf8 => 1, pretty => 1});
+    }
+    
+    print "$json\n";
+
+    return 1;
+
+}
 
 =item B<db_print_type>
 
