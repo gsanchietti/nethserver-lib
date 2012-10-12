@@ -32,6 +32,10 @@ exit(0) unless $dh; # Nothing to do
 
 use esmith::ConfigDB;
 
+# Set BOOTUP environment variable to get rid of console escapes in init scripts. 
+# See /etc/sysconfig/init and /etc/init.d/functions
+$ENV{'BOOTUP'}='simple';
+
 my $conf = esmith::ConfigDB->open_ro || die "Couldn't open config db";
 
 foreach my $service (grep { !/^\./ } $dh->read())
@@ -70,7 +74,7 @@ foreach my $service (grep { !/^\./ } $dh->read())
     foreach (@actions)
     {
 	warn "adjusting service $service ($_)\n";
-	system('/sbin/service', $service, $_);	
+	system('/etc/rc.d/init.d/' . $service, $_);	
     }
 
 }
