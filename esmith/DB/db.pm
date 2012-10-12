@@ -281,14 +281,14 @@ sub _file_path
 	return $file;
     }
 
-    if (-e "/home/e-smith/db/$file")
+    if (-e "/var/lib/nethserver/db/$file")
     {
-	return "/home/e-smith/db/$file";
+	return "/var/lib/nethserver/db/$file";
     } elsif (-e "/home/e-smith/$file") {
 	warn "Database found in old location /home/e-smith/$file";
 	return "/home/e-smith/$file";
     } else {
-	return "/home/e-smith/db/$file";
+	return "/var/lib/nethserver/db/$file";
     }
 }
 

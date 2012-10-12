@@ -13,7 +13,7 @@ use Sys::Syslog qw(:DEFAULT setlogsock);
 use Fcntl qw(:DEFAULT :flock);
 use Carp qw(cluck);
 
-my $Default_Config = '/home/e-smith/db/configuration';
+my $Default_Config = '/var/lib/nethserver/db/configuration';
 
 =pod
 
@@ -71,7 +71,7 @@ $config_file which you can then use like a normal hash.  Any writes or
 deletes are immediately written back to the $config_file.
 
 If no $config_file is supplied it falls back to the environment variable 
-ESMITH_CONFIG_DB, and finally defaults to F</home/e-smith/db/configuration>
+ESMITH_CONFIG_DB, and finally defaults to F</var/lib/nethserver/db/configuration>
 
 If the $config_file doesn't exist it will create one for you.
 
@@ -364,7 +364,7 @@ sub _unlock {
 
 #------------------------------------------------------------
 # Constructor for the tied hash. If filename not specified,
-# defaults to '/home/e-smith/db/configuration'.
+# defaults to '/var/lib/nethserver/db/configuration'.
 #------------------------------------------------------------
 
 sub TIEHASH

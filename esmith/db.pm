@@ -814,7 +814,7 @@ sub _db_path($)
     {
 	return $file;
     }
-    return "/home/e-smith/db/$file" if (-e "/home/e-smith/db/$file");
+    return "/var/lib/nethserver/db/$file" if (-e "/var/lib/nethserver/db/$file");
 
     if (-e "/home/e-smith/$file")
     {
@@ -823,7 +823,7 @@ sub _db_path($)
     }
     else
     {
-	return "/home/e-smith/db/$file";
+	return "/var/lib/nethserver/db/$file";
     }
 }
 
