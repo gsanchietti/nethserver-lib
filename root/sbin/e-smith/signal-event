@@ -8,7 +8,7 @@
 
 use strict;
 use Getopt::Long;
-use NethServer::Event;
+use esmith::event;
 use Env qw(LANG LANGUAGE);
 
 my $usage = "usage:
@@ -25,7 +25,8 @@ $LANG='en_US.utf8';
 delete $ENV{LANGUAGE};
 delete $ENV{$_} foreach grep(m/^LC_.+/, keys %ENV);
 
-my $exitcode = NethServer::Event::signal($event, @args);
+my $exitcode = event_signal($event, @args);
+
 
 # reverse exitcode for command-line usage
 exit ($exitcode ? 0 : 1);
