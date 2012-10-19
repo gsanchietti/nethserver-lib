@@ -15,13 +15,14 @@ my $usage = "NethServer (C) 2012 Nethesis srl
 Usage:
     $0 <command>
     
-    <command> := enable|disable|signal|status|list
+    <command> := add|enable|disable|list|signal|status
 
     Command description:
 
-	list    : show the current event queue contents
+	add	: if queue is enabled, add an event to it
 	enable  : create an empty queue and enable it
 	disable : disable and remove the queue contents
+	list    : show the current event queue contents
 	signal  : signal the events in the queue and disable it
 	status  : check if the queue is enabled or not
 
@@ -51,6 +52,11 @@ if($cmd eq 'enable') {
     } else {
 	$returnValue = 0;
     }
+} elsif($cmd eq 'add') {
+    if (NethServer::Event::queue_is_enabled()) {
+       NethServer::Event::queue_add(@args);
+    }
+    $returnValue = 1;
 
 } else {
     die $usage;
