@@ -414,6 +414,9 @@ If $key is given returns an hash reference, representing the key.
 Otherwise it returns an array reference of references to hash,
 representing the entire DB.
 
+If $key is given but not found in database, integer 1 is returned.
+
+
 =cut
 
 
@@ -425,15 +428,14 @@ sub db_prepare_json {
 
     if (defined $key) {
 	if( ! defined db_get($hash, $key)) {
-	    return undef;
+	    return 1;
 	}
         @list = ($key);
     } else {
         @list = db_get($hash);
-    }
-
-    if( ! @list) {
-	return undef;
+	if( scalar @list == 0) {
+	    return \@ret;
+	}
     }
     
     foreach (@list) {
