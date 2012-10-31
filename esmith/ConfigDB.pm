@@ -340,8 +340,7 @@ SME Server Developers <bugs@e-smith.com>
 
 =head1 SEE ALSO
 
-L<esmith::DB>, L<esmith::DB::db>, L<esmith::AccountsDB>, L<esmith::DomainsDB>,
-L<esmith::HostsDB>, L<esmith::NetworksDB>, L<esmith::ConfigDB::Record>
+L<esmith::DB>, L<esmith::DB::db>, L<esmith::ConfigDB::Record>
 
 =cut
 
