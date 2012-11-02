@@ -17,7 +17,6 @@ our %EXPORT_TAGS = (
 
 use Net::IPv4Addr qw(:all);
 use Mail::RFC822::Address;
-use esmith::AccountsDB;
 
 use constant TRUE  => 1;
 use constant FALSE => 0;
@@ -252,52 +251,6 @@ sub isValidHostname
         }
     }
     return 1;
-}
-
-=item I<isValidEmail>
-
-This validation function validates an email address, using the
-Mail::RFC822::Address module. Additionally, by default, it permits a local
-address instead of a fully-qualified remote address, even checking the
-existence of said user in the accounts db.
-
-If you don't wish to permit local addresses, pass the permitlocal option as
-false.
-
-ie. esmith::util::isValidEmail($address, { permitlocal => 0 })
-
-=cut
-
-sub isValidEmail
-{
-    my $address = shift;
-    my $hashref = shift || {};
-    my %defaults = ( permitlocal => 1 );
-    my %options = (%defaults, %$hashref);
-
-    if (Mail::RFC822::Address::valid($address))
-    {
-        return TRUE;
-    }
-    # Permit a local address.
-    if ($address =~ /^[a-zA-Z][a-zA-Z0-9\._\-]*$/)
-    {
-        # Exception for 'admin' user. FIXME - I'd rather not hardcode this,
-        # but we can't permit email to all system users.
-        return TRUE if $address eq 'admin';
-        # Make sure the user exists.
-        my $accountsdb = esmith::AccountsDB->open_ro;
-        my $user = $accountsdb->get($address) || '';
-        unless (($user) && ($user->prop('type') eq 'user'))
-        {
-            return FALSE;
-        }
-        else
-        {
-            return TRUE;
-        }
-    }
-    return FALSE;
 }
 
 =back
