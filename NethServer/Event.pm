@@ -6,8 +6,8 @@
 
 package NethServer::Event;
 
-our $QUEUE_DIR='/var/spool/nethserver';
-our $QUEUE_LINK= $QUEUE_DIR . '/current';
+our $QUEUE_DIR='/var/spool/nethserver/';
+our $QUEUE_LINK= $QUEUE_DIR . 'current';
 
 use strict;
 use Data::UUID;
@@ -33,19 +33,19 @@ Check if events are queued or not
 =cut
 sub queue_is_enabled
 {
-    return -l $QUEUE_LINK && -f $QUEUE_DIR . '/' . (readlink $QUEUE_LINK);
+    return -l $QUEUE_LINK && -f $QUEUE_DIR . (readlink $QUEUE_LINK);
 }
 
 =head2 queue_flush
 
-Flush the event queue whitout execute the events in it. 
+Flush the event queue without executing the events.
 
 The queue is disabled after this operation.
 
 =cut
 sub queue_flush
 {
-    my $queue_file = readlink $QUEUE_LINK;
+    my $queue_file = $QUEUE_DIR . (readlink $QUEUE_LINK);
 
     if(-l $QUEUE_LINK) {
 	unlink $QUEUE_LINK;
@@ -63,7 +63,7 @@ Signal enqueued events, then flush.
 =cut
 sub queue_signal
 {
-    if(!queue_is_enabled()) {
+    if( ! queue_is_enabled()) {
 	return 0; # Error
     }
 
@@ -113,15 +113,13 @@ sub queue_initialize
 {
     my $uuid = new Data::UUID;
     my $queue_file = 'q-' . $uuid->to_string($uuid->create());
+
+    queue_flush();
     
     my $current_mask = umask 0133;
-    open(my $fd, ">", $QUEUE_DIR . '/' . $queue_file);
+    open(my $fd, ">", $QUEUE_DIR . $queue_file);
     close($fd);
     umask $current_mask;
-
-    if(-l $QUEUE_LINK) {
-	unlink $QUEUE_LINK;
-    }
 
     symlink $queue_file, $QUEUE_LINK;
 }
