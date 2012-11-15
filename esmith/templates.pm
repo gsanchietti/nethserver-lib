@@ -567,18 +567,19 @@ sub processTemplate {
 		}
             }
             elsif ( $p{'OUTPUT_TYPE'} eq 'string' ) {
-		my $ltext;
-                unless ($ltext = fill_in_file(
+		my $ltext = fill_in_file(
                     "$filepath",
                     HASH    => $tmpl_vars,
                     BROKEN  => $broken,
                     UNTAINT => 1,
                     PACKAGE => $pkg
-                  ))
-		{
+		);
+
+		if( ! defined $ltext ) {
 		    carp "ERROR: Cannot process template $filepath: $Text::Template::ERROR\n";
 		    return;
 		}
+
                 $text .= $ltext;
             }
         }
