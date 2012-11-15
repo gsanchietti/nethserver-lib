@@ -193,13 +193,13 @@ sub DB_print
 sub DB_dump_json
 {
     my $key = shift;
-    print to_json($db->prepare_json($key), {utf8 => 1, pretty => 0, allow_nonref => 1});
+    print to_json($db->prepare_json($key), {utf8 => 0, pretty => 0, allow_nonref => 1});
 }
 
 sub DB_dump_json_pretty
 {
     my $key = shift;
-    print to_json($db->prepare_json($key), {utf8 => 1, pretty => 1, allow_nonref => 1}) . "\n";
+    print to_json($db->prepare_json($key), {utf8 => 0, pretty => 1, allow_nonref => 1}) . "\n";
 }
 
 sub DB_keys
