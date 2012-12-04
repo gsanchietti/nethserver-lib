@@ -805,19 +805,6 @@ sub setUnixSystemPassword ($)
 
 =pod
 
-=head2 setServerSystemPassword($password)
-
-Set the samba administrator password.
-
-=cut
-
-sub setServerSystemPassword ($)
-{
-    my ($password) = @_;
-}
-
-=pod
-
 =head2 setUserPassword($username, $password)
 
 Set e-smith user password
