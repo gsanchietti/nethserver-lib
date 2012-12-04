@@ -212,56 +212,6 @@ sub getLocale
 
 =pod
 
-=head2 hosts_allow_spec ($service [,$daemon])
-
-Given a service, return the string suitable for /etc/hosts.allow,
-checking to see if the service is defined, whether it is enabled and
-whether access is set to public, private, or localhost.
-
-An optional argument provides the tag which appears in hosts.allow. If not
-given, the service name is used.
-
-For example, one of the following:
-
-# 'oidentd' is not defined in the configuration database
-# 'oidentd' is disabled in the configuration database
-in.identd: 127.0.0.1
-in.identd: 127.0.0.1 192.168.1.1/255.255.255.0
-in.identd: ALL
-
-And here's the hosts.allow fragment:
-
-{
-    $OUT = $DB->hosts_allow_spec('oidentd', 'in.identd');
-}
-
-=cut
-
-sub hosts_allow_spec
-{
-    my $self         = shift;
-    my $service_name = shift;
-    my $daemon       = shift || $service_name;
-
-    my $service = $self->get($service_name)
-      or return
-      "# '$service_name' is not defined in the configuration database";
-
-    my $status = system(("/sbin/chkconfig", $daemon));
-    return "# '$daemon' is disabled"
-      unless ( $status == 0 );
-
-    my $access = $service->prop('access') || "private";
-
-    use esmith::NetworksDB;
-    my $ndb = esmith::NetworksDB->open_ro;
-
-    my @spec = ( "$daemon:", $ndb->local_access_spec($access) );
-    return "@spec";
-}
-
-=pod
-
 =head2 wins_server
 
 Return the value of the WINS server from the config db
@@ -390,8 +340,7 @@ SME Server Developers <bugs@e-smith.com>
 
 =head1 SEE ALSO
 
-L<esmith::DB>, L<esmith::DB::db>, L<esmith::AccountsDB>, L<esmith::DomainsDB>,
-L<esmith::HostsDB>, L<esmith::NetworksDB>, L<esmith::ConfigDB::Record>
+L<esmith::DB>, L<esmith::DB::db>, L<esmith::ConfigDB::Record>
 
 =cut
 

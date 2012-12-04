@@ -1038,7 +1038,7 @@ sub initialize_default_databases
     # Optionally take an argument to the db root, for testing purposes.
     my %defaults = (
         dbroot => '/etc/e-smith/db',
-        dbhome => '/home/e-smith/db',
+        dbhome => '/var/lib/nethserver/db',
         old_dbhome => '/home/e-smith',
     );
     my %args   = ( %defaults, @_ );

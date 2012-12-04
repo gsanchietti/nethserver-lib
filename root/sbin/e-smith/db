@@ -11,6 +11,7 @@ package esmith;
 use strict;
 use esmith::config;
 use esmith::db;
+use JSON;
 
 #--------------------------------------------------------------------------
 # Set up the command list and usage strings
@@ -28,6 +29,12 @@ my %commands = (
 		    'usage'	=>	"$0 dbfile print [key]",
 		},
 
+	'printjson'
+	    =>	{
+		    'function'	=>	\&DB_dump_json,
+		    'usage'	=>	"$0 dbfile printjson [key]",
+		},
+
 	'show'
 	    =>	{
 		    'function'	=>	\&DB_show,
@@ -35,7 +42,7 @@ my %commands = (
 		},
         'showjson'
             =>  {
-                    'function'  =>      \&DB_show_json,
+                    'function'  =>      \&DB_dump_json_pretty,
                     'usage'     =>      "$0 dbfile showjson [key]",
                 },
 
@@ -47,8 +54,8 @@ my %commands = (
 
         'getjson'
             =>  {
-                    'function'  =>      \&DB_get_json,
-                    'usage'     =>      "$0 dbfile getjson key",
+                    'function'  =>      \&DB_dump_json,
+                    'usage'     =>      "$0 dbfile getjson [key]",
                 },
 
 	'set'
@@ -125,6 +132,7 @@ my %commands = (
 my $usage = "usage:
     $commands{'keys'}{'usage'}
     $commands{'print'}{'usage'}
+    $commands{'printjson'}{'usage'}
     $commands{'show'}{'usage'}
     $commands{'showjson'}{'usage'}
     $commands{'get'}{'usage'}
@@ -182,6 +190,18 @@ sub DB_print
     }
 }
 
+sub DB_dump_json
+{
+    my $key = shift;
+    print to_json($db->prepare_json($key), {utf8 => 0, pretty => 0, allow_nonref => 1});
+}
+
+sub DB_dump_json_pretty
+{
+    my $key = shift;
+    print to_json($db->prepare_json($key), {utf8 => 0, pretty => 1, allow_nonref => 1}) . "\n";
+}
+
 sub DB_keys
 {
     my @keys = $db->get();
@@ -204,37 +224,12 @@ sub DB_show
     }
 }
 
-sub DB_show_json
-{
-    my $key = shift;
-
-    if (defined $key)
-    {
-        $db->show_json($key) ? exit 0 : exit 1;
-    }
-    else
-    {
-        $db->show_json() ? exit 0 : exit 1;
-    }
-}
-
-
 sub DB_get
 {
     my $key = shift;
     die "$commands{'get'}{'usage'}\n" unless $key;
 
     my $value = $db->get($key);
-    exit 1 unless defined $value;
-    print "$value\n" if defined $value;
-}
-
-sub DB_get_json
-{
-    my $key = shift;
-    die "$commands{'get'}{'usage'}\n" unless $key;
-
-    my $value = $db->get_json($key);
     exit 1 unless defined $value;
     print "$value\n" if defined $value;
 }
@@ -381,3 +376,4 @@ sub DB_delprop
 	$db->delete_prop($key, $_);
     }
 }
+

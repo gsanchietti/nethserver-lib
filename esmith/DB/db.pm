@@ -78,6 +78,7 @@ like( esmith::DB::db->error, qr/^File exists/,    '  right error message' );
 sub create
 {
     my ( $class, $file ) = @_;
+    my $dbName = $file;
     $file = $class->_file_path($file);
     my $self;
 
@@ -107,6 +108,18 @@ sub create
         $self->set_error($@);
         return;
     }
+
+    # Run a database initialization script, if exsits:
+    my $initScript = '/usr/libexec/nethserver/initialize-' . $dbName . '-database';
+    if( -x $initScript) {
+	warn "Running $initScript\n";
+	system('/usr/libexec/nethserver/initialize-networks-database');
+	if( $? != 0 ) {
+	    warn "$initScript script failed!";
+	}
+	$self->reload;
+    }
+
     return $self;
 }
 
@@ -281,14 +294,14 @@ sub _file_path
 	return $file;
     }
 
-    if (-e "/home/e-smith/db/$file")
+    if (-e "/var/lib/nethserver/db/$file")
     {
-	return "/home/e-smith/db/$file";
+	return "/var/lib/nethserver/db/$file";
     } elsif (-e "/home/e-smith/$file") {
 	warn "Database found in old location /home/e-smith/$file";
 	return "/home/e-smith/$file";
     } else {
-	return "/home/e-smith/db/$file";
+	return "/var/lib/nethserver/db/$file";
     }
 }
 
