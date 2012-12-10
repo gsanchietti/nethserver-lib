@@ -1,0 +1,86 @@
+Name: nethserver-lib
+Summary: NethServer library module
+Version: @@VERSION@@
+Release: @@RELEASE@@%{?dist}
+License: GPL
+Source: %{name}-%{version}.tar.gz
+BuildArch: noarch
+
+BuildRequires: nethserver-devtools
+BuildRequires: perl, perl(File::Path)
+
+Requires: dialog
+Requires: perl, perl(Text::Template)
+Requires: perl(Time::HiRes)
+Requires: perl(Authen::PAM), perl(I18N::AcceptLanguage)
+Requires: perl(I18N::LangTags) >= 0.27
+Requires: perl(Net::IPv4Addr) >= 0.10
+Requires: perl(MIME::Base64)
+Requires: perl(Data::UUID)
+Requires: perl-JSON
+
+%description
+Common script libraries for the e-smith system
+
+%prep
+%setup
+
+%build
+perl createlinks
+
+# davidep: relocate perl modules under default perl vendorlib directory:
+mkdir -p root%{perl_vendorlib}
+mv -v esmith root%{perl_vendorlib}
+mv -v NethServer root%{perl_vendorlib}
+
+%install
+rm -rf $RPM_BUILD_ROOT
+(cd root ; find . -depth -not -name '*.orig' -print | cpio -dump $RPM_BUILD_ROOT)
+rm -f %{name}-%{version}-%{release}-filelist
+%{genfilelist} $RPM_BUILD_ROOT >%{name}-%{version}-%{release}-filelist
+echo "%doc COPYING" >> %{name}-%{version}-%{release}-filelist
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%files -f %{name}-%{version}-%{release}-filelist
+%defattr(-,root,root)
+
+%changelog
+* Fri Oct 26 2012 Davide Principi <davide.principi@nethesis.it> - 6.133-4.nh
+- event_queue and pkg* command moved to nethserver-yum
+
+* Fri Aug 10 2012 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 6.104.7-2.g64b0a29.nh
+- Execute /sbin/e-smith/event_queue on first install 
+
+* Wed Mar 28 2012 Davide Principi <davide.principi@nethesis.it> - 6.2.2-1.nh
+- NethServer::Server package: added stop() function
+
+* Tue Mar 27 2012 Davide Principi <davide.principi@nethesis.it> - 6.2.0-1.nh
+- Added NethServer::Service::is_enabled function; upgraded version number
+
+* Thu Mar 15 2012 Davide Principi <davide.principi@nethesis.it> - 6.1.1-1.nh
+- Removed any event and action logics
+
+* Wed Mar  7 2012 Davide Principi <davide.principi@nethesis.it> - 6.1.0-1.nh.git470fcb2a
+- Added PAM authentication script to check user credentials.
+
+* Wed Feb 22 2012 Davide Principi <davide.principi@nethesis.it> - 2.3.2-1.nh.gitdavidep
+- Removed obsolete setSambaPassword/getSambaPassword functions
+
+* Mon Nov 21 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 2.3.1-1.nh
+- Add first implementation of system wide validators
+- Remove e-smith-lib obsolets and provides
+
+* Wed Sep 21 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 2.3.0-1.nh
+- Rename to nethserver-lib
+- Search for start service script only in /etc/rc.d/init.d
+
+* Thu Aug 04 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 2.2.0-101.nh
+- Use udev for ethernet listing
+
+* Fri Jul 22 2011 Davide <davide.principi@nethesis.it> - 2.2.0-100.nh
+- Forked nethserver-lib package
+
+* Fri Mar 11 2011 Giacomo Sanchietti <giacomo@nethesis.it> 2.2.0-99.1.nh
+- Quick and dirt patch to control services not in rc7
