@@ -213,11 +213,13 @@ sub backtitle
 
     my $db = esmith::ConfigDB->open_ro or die "Couldn't open ConfigDB\n";
 
-    sprintf("%-33s%45s",
-    ($db->get_prop('sysconfig', 'ProductName') || "NethServer") . " " .
-    ($db->get_prop('sysconfig', 'ReleaseVersion') || ''),
-    $db->get_prop('sysconfig', 'Copyright') || "Copyright (C) 2003-2012 Nethesis srl"
-    );
+    sprintf("%-33s%45s", join(" ",
+			      ($db->get_prop('sysconfig', 'ProductName') || "NethServer"),
+			      ($db->get_prop('sysconfig', 'Version') || ''),
+			      ($db->get_prop('sysconfig', 'Release') || ''),
+	    ),
+	    $db->get_prop('sysconfig', 'Copyright') || "Copyright (C) 2003-2012 Nethesis srl"
+	);
 }
 
 =head2 message_page
