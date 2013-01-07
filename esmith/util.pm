@@ -462,24 +462,6 @@ sub computeHostRange ($$)
         IPaddrToQuad($lastAddrBits) );
 }
 
-=pod
-
-=head2 ldapBase($domain)
-
-Given a domain name such as foo.bar.com, generate the
-LDAP base name "dc=foo,dc=bar,dc=com".
-
-=cut
-
-sub ldapBase ($)
-{
-    my ($domainName) = @_;
-    $domainName =~ s/\./,dc=/g;
-    return "dc=" . $domainName;
-}
-
-=pod
-
 =head2 backgroundCommand($delaySec, @command)
 
 Run command in background after a specified delay.
@@ -707,17 +689,14 @@ sub setUnixPasswordRequirePrevious ($$$)
 
 =pod
 
-=head2 LdapPassword()
+=head2 genRandomPassword()
 
-Returns the LDAP password from the file C</etc/openldap/ldap.pw>.
-If the file does not exist, a suitable password is created, stored
-in the file, then returned to the caller.
-
+Returns the a random generated password using urandom.
 Returns undef if the password could not be generated/retrieved.
 
 =cut
 
-sub genLdapPassword ()
+sub genRandomPassword ()
 {
 
     # Otherwise generate a suitable new password, store it in the
@@ -743,41 +722,8 @@ sub genLdapPassword ()
     close RANDOM;
 
     my $umask    = umask 0077;
-    my $password = encode_base64($buf, "");
 
-    unless ( open( WR, ">/etc/openldap/ldap.pw" ) )
-    {
-        warn "Could not write LDAP password file.\n";
-        return undef;
-    }
-
-    print WR "$password\n";
-    close WR;
-    umask $umask;
-
-    chmod 0600, "/etc/openldap/ldap.pw";
-
-    return $password;
-}
-
-sub LdapPassword ()
-{
-
-    # Read the password from the file /etc/openldap/ldap.pw if it
-    # exists.
-    if ( -f "/etc/openldap/ldap.pw" )
-    {
-        open( LDAPPW, "</etc/openldap/ldap.pw" )
-          || die "Could not open LDAP password file.\n";
-        my $password = <LDAPPW>;
-        chomp $password;
-        close LDAPPW;
-        return $password;
-    }
-    else
-    {
-        return genLdapPassword();
-    }
+    return encode_base64($buf, "");
 }
 
 =pod
