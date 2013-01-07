@@ -46,7 +46,7 @@ foreach my $service (grep { !/^\./ } $dh->read())
 	warn "No conf db entry for service $service\n";
 	next;
     } elsif ( ! NethServer::Service::is_enabled($service)) {
-	warn "Service $service is not enabled\n";
+        NethServer::Service::stop($service);
 	next;
     }
     my $f =  "services2adjust/$service";
