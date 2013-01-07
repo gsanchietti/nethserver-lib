@@ -689,15 +689,33 @@ sub setUnixPasswordRequirePrevious ($$$)
 
 =pod
 
-=head2 genRandomPassword()
+=head2 genRandomPassword($store_file="")
 
 Returns the a random generated password using urandom.
+If $store_file is not empty, try to read the password from the file.
+If $store_file not exists, generate a new random password and save it on the file.
 Returns undef if the password could not be generated/retrieved.
 
 =cut
 
 sub genRandomPassword ()
 {
+
+    my $store_file = shift || "";
+    my $password = undef;
+
+    if ($store_file ne "") {
+    # Read the password from the file $store_file if it exists
+        if ( -f $store_file )
+        {
+            open( PW, "</$store_file" ) || die "Could not open $store_file password file.\n";
+            $password = <PW>;
+            chomp $password;
+            close PW;
+            return $password;
+        }
+    }
+
 
     # Otherwise generate a suitable new password, store it in the
     # correct file, and return it to the caller.
@@ -721,9 +739,23 @@ sub genRandomPassword ()
     }
     close RANDOM;
 
-    my $umask    = umask 0077;
 
-    return encode_base64($buf, "");
+    $password = encode_base64($buf, "");
+
+    if ($store_file ne "") {
+        my $umask    = umask 0077;
+        unless ( open( WR, ">$store_file" ) )
+        {
+            warn "Could not write $store_file password file.\n";
+            return undef;
+        }
+        print WR "$password\n";
+        close WR;
+        umask $umask;
+        chmod 0600, $store_file;
+   }
+
+   return $password;
 }
 
 =pod
