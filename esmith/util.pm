@@ -698,7 +698,7 @@ Returns undef if the password could not be generated/retrieved.
 
 =cut
 
-sub genRandomPassword ()
+sub genRandomPassword
 {
 
     my $store_file = shift || "";
