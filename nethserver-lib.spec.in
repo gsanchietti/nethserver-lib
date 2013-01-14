@@ -1,7 +1,7 @@
 Name: nethserver-lib
 Summary: NethServer library module
 Version: @@VERSION@@
-Release: @@RELEASE@@%{?dist}
+Release: @@RELEASE@@
 License: GPL
 Source: %{name}-%{version}.tar.gz
 BuildArch: noarch
