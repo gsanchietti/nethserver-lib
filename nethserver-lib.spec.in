@@ -49,4 +49,12 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Fri Dec 21 2012 Davice Principi <davide.principi@nethesis.it> - 1.0.0-1
+- First release
+
+* Fri Jan 18 2013 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 1.0.1-1
+- adjust-services: stop service if not enabled
+- added a new getnRandomPassword function
+- esmith/console.pm: read separate Version and Release props from key "sysconfig"
+- Removed old LDAP libs (moved to nethserver-directory)
 
