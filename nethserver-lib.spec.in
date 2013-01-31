@@ -49,12 +49,14 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-* Fri Dec 21 2012 Davice Principi <davide.principi@nethesis.it> - 1.0.0-1
-- First release
+* Mon Jan 21 2013 Davide Principi <davide.principi@nethesis.it> - 1.0.2-1.ns6
+- DB/db.pm: fixed $initScript command execution. Only networks DB was actually initialized.
 
-* Fri Jan 18 2013 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 1.0.1-1
+* Fri Jan 18 2013 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 1.0.1-1.ns6
 - adjust-services: stop service if not enabled
 - added a new getnRandomPassword function
 - esmith/console.pm: read separate Version and Release props from key "sysconfig"
 - Removed old LDAP libs (moved to nethserver-directory)
 
+* Fri Dec 21 2012 Davice Principi <davide.principi@nethesis.it> - 1.0.0-1.ns6
+- First release
