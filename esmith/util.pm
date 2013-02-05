@@ -687,6 +687,31 @@ sub setUnixPasswordRequirePrevious ($$$)
     return 1;    # success
 }
 
+
+
+=pod
+
+=head2 genRandomHash()
+
+Returns a random generated sha1 hash using urandom.
+Returns undef if the hash could not be generated/retrieved.
+
+=cut
+
+sub genRandomHash
+{
+
+    my $hash = undef;
+
+    # Generate a suitable new has, store it in the prop
+    # and return it to the caller.
+
+    use Digest::SHA1  qw(sha1_hex);
+    $hash = sha1_hex(rand().localtime());
+
+    return $hash;
+}
+
 =pod
 
 =head2 genRandomPassword($store_file="")
