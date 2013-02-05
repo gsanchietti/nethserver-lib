@@ -113,7 +113,7 @@ sub create
     my $initScript = '/usr/libexec/nethserver/initialize-' . $dbName . '-database';
     if( -x $initScript) {
 	warn "Running $initScript\n";
-	system('/usr/libexec/nethserver/initialize-networks-database');
+	system($initScript);
 	if( $? != 0 ) {
 	    warn "$initScript script failed!";
 	}
