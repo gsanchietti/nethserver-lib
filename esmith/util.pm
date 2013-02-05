@@ -687,6 +687,48 @@ sub setUnixPasswordRequirePrevious ($$$)
     return 1;    # success
 }
 
+
+
+=pod
+
+=head2 genRandomHash()
+
+Returns a random generated hash using urandom.
+Returns undef if the hash could not be generated/retrieved.
+
+=cut
+
+sub genRandomHash
+{
+
+    my $hash = undef;
+
+    # Generate a suitable new has, store it in the prop
+    # and return it to the caller.
+
+    use MIME::Base64 qw(encode_base64);
+
+    unless ( open( RANDOM, "/dev/urandom" ) )
+    {
+        warn "Could not open /dev/urandom: $!";
+        return undef;
+    }
+
+    my $buf = "not set";
+
+    # 57 bytes is a full line of Base64 coding, and contains
+    # 456 bits of randomness - given a perfectly random /dev/urandom
+    if ( read( RANDOM, $buf, 57 ) != 57 )
+    {
+        warn("Short read from /dev/urandom: $!");
+        return undef;
+    }
+    close RANDOM;
+    $hash = encode_base64($buf, "");
+
+    return $hash;
+}
+
 =pod
 
 =head2 genRandomPassword($store_file="")
