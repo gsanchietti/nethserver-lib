@@ -5,6 +5,7 @@ Release: @@RELEASE@@
 License: GPL
 Source: %{name}-%{version}.tar.gz
 BuildArch: noarch
+URL: %{url_prefix}/%{name}
 
 BuildRequires: nethserver-devtools
 BuildRequires: perl, perl(File::Path)
