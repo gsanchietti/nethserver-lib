@@ -50,6 +50,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Feb 21 2013 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.3-1.ns6
+- util.pm: add genRandomHash function to generate random sha1 hash
+- Update template-default with Nethesis copyright. Fix: #1649
+ 
 * Mon Jan 21 2013 Davide Principi <davide.principi@nethesis.it> - 1.0.2-1.ns6
 - DB/db.pm: fixed $initScript command execution. Only networks DB was actually initialized.
 
