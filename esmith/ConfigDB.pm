@@ -214,6 +214,8 @@ sub getLocale
 
 =head2 wins_server
 
+OBSOLETE: this function always returns undef
+
 Return the value of the WINS server from the config db
 or undef if we don't have a WINS server set and we are
 not the domain master
@@ -222,17 +224,6 @@ not the domain master
 
 sub wins_server
 {
-    my ($self) = @_;
-
-    my $wins_server = $self->get_prop( 'smb', 'WINSServer' );
-
-    return $wins_server if $wins_server;
-
-    my $server_role = $self->get_prop( 'smb', 'ServerRole' ) || 'WS';
-
-    return $self->get_prop( 'InternalInterface', 'IPAddress' )
-      if $server_role =~ m{^(PDC|ADS)$};
-
     return undef;
 }
 
