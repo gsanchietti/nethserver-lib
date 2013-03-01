@@ -25,7 +25,7 @@ package NethServer::Migrate;
 use strict;
 
 use Exporter 'import';
-our @EXPORT_OK = qw(migrateDir);
+our @EXPORT_OK = qw(migrateDir parseShadow);
 
 use File::stat;
 use Carp;
@@ -91,7 +91,7 @@ sub migrateDir($$)
     } else {
 	# Use COPY
 	print "[INFO] Copy $s to $d\n";
-	system('cp', '-t', $d, @sources);
+	system('cp', '-a', '-t', $d, @sources);
     }
 
     if($? != 0) {
@@ -100,3 +100,47 @@ sub migrateDir($$)
 
     return 1; # success
 }
+
+
+=head2 parseShadow($shadowFile)
+
+Read secret hashes from $shadowFile and returns a perl hash reference,
+indexed by user name.  Each entry is a shadow structure; see man
+shadow(3).
+
+=cut
+sub parseShadow($)
+{
+    my $shadowFile = shift;
+
+    my %h = ();
+    my @fields = (qw(
+       namp
+       pwdp
+       lstchg
+       min
+       max
+       warn
+       inact
+       expire
+       flag
+    ));
+   
+    if( ! open(FH, '<', $shadowFile)) {
+	carp "[ERROR] Could not open $shadowFile for reading!";
+	return {};
+    }
+
+    while(<FH>) {
+	chomp($_);
+	my %entry = ();
+	@entry{@fields} = split(':', $_, 9);
+	$h{$entry{namp}} = \%entry;
+    }
+
+    close(FH);
+
+    return \%h;
+}
+
+1;
