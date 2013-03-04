@@ -143,4 +143,42 @@ sub parseShadow($)
     return \%h;
 }
 
+
+=head2 parseGroup($groupFile)
+
+Read group database from $groupFile and returns a perl hash reference,
+indexed by group name.  Each entry is a group entry structure; see man
+getgrnam(3) or <grp.h>.
+
+=cut
+sub parseGroup($)
+{
+    my $groupFile = shift;
+
+    my %h = ();
+    my @fields = (qw(
+       name
+       passwd
+       gid
+       mem
+    ));
+   
+    if( ! open(FH, '<', $groupFile)) {
+	carp "[ERROR] Could not open $groupFile for reading!";
+	return {};
+    }
+
+    while(<FH>) {
+	chomp($_);
+	my %entry = ();
+	@entry{@fields} = split(':', $_, 4);
+	$h{$entry{name}} = \%entry;
+    }
+
+    close(FH);
+
+    return \%h;
+}
+
+
 1;
