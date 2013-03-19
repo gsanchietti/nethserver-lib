@@ -48,9 +48,12 @@ rm -rf $RPM_BUILD_ROOT
 %files -f %{name}-%{version}-%{release}-filelist
 %defattr(-,root,root)
 
-
-
 %changelog
+* Tue Mar 19 2013 Davide Principi <davide.principi@nethesis.it> - 1.1.0-1.ns6
+- Added NethServer::Migrate module, for migration support. Refs #1690 #1655 #1657
+- esmith::ConfigDB (wins_server): obsolete function returns always undef. Refs #7 #1081
+- *.spec: use url_prefix macro in URL tag; update changelog for release 1.0.3-1. Refs #1654 
+
 * Thu Feb 21 2013 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.3-1.ns6
 - util.pm: add genRandomHash function to generate random sha1 hash
 - Update template-default with Nethesis copyright. Fix: #1649
