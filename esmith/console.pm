@@ -218,7 +218,7 @@ sub backtitle
 			      ($db->get_prop('sysconfig', 'Version') || ''),
 			      ($db->get_prop('sysconfig', 'Release') || ''),
 	    ),
-	    $db->get_prop('sysconfig', 'Copyright') || "Copyright (C) 2003-2012 Nethesis srl"
+	    $db->get_prop('sysconfig', 'Copyright') || "Copyright (C) 2003-2013 Nethesis srl"
 	);
 }
 
