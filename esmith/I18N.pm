@@ -155,8 +155,7 @@ sub setLocale()
 
     $locale = $self->langtag2locale($opt) if ($opt);
     $locale ||= $self->preferredLocale;
-    $locale =~ s{(?:\..*)?$}{.utf8};
-    $locale =~ s{.utf8$}{} if $text_domain eq 'server-console';
+    $locale =~ s/UTF-8/utf-8/;
 
     $ENV{'LANGUAGE'} = $locale;
     $ENV{'LANG'}     = $ENV{'LANGUAGE'};
