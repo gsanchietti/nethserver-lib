@@ -203,10 +203,11 @@ doesn't exist.
 sub getLocale
 {
     my $self     = shift;
-    my $rec      = $self->get('sysconfig') or return undef;
-    my $lang     = $rec->prop('Language') || 'en_US';
-    my $kbdtype  = $rec->prop('KeyboardType') || 'pc';
-    my $keytable = $rec->prop('Keytable') || 'us';
+    my %kb = $self->parse_sysconfig('/etc/sysconfig/keyboard');
+    my %lang = $self->parse_sysconfig('/etc/sysconfig/i18n');
+    my $lang     = $lang{'LANG'} || 'en_US';
+    my $kbdtype  = $kb{'KEYBOARDTYPE='} || 'pc';
+    my $keytable = $kb{'KEYTABLE'} || 'us';
     return ( $lang, $kbdtype, $keytable );
 }
 
@@ -252,6 +253,25 @@ sub AUTOLOAD
         return $self->list_by_type($called_sub_name);
     }
 }
+
+=pod
+
+Read a given sysconfig-style file and return an hash of key=>values.
+
+=cut
+
+sub parse_sysconfig
+{
+    use IO::File;
+    my $self = shift;
+    my $file = shift || "";
+    my %hash;
+    my $fh = IO::File->new($file, 'r') or return %hash;
+    %hash = map {  s/"//g; split /=|\s+/; } <$fh>;
+    close $fh;
+    return %hash;
+}
+
 
 =pod
 
