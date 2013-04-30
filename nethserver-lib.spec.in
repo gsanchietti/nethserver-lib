@@ -49,6 +49,10 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
+* Tue Apr 30 2013 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 1.1.1-1.ns6
+- Rebuild for automatic package handling. #1870
+- Read locale settings from /etc/sysconfig. Refs #1754
+
 * Tue Mar 19 2013 Davide Principi <davide.principi@nethesis.it> - 1.1.0-1.ns6
 - Added NethServer::Migrate module, for migration support. Refs #1690 #1655 #1657
 - esmith::ConfigDB (wins_server): obsolete function returns always undef. Refs #7 #1081
