@@ -39,7 +39,9 @@ sub TIEHANDLE
 sub PRINT
 {
     my $self = shift;
-    syslog('info', "%s", "@_");
+    my $msg = join('', @_);
+    chomp $msg;
+    syslog('info', "%s", $msg);
 }
 
 sub PRINTF
