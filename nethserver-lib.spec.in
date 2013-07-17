@@ -49,6 +49,10 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
+* Wed Jul 17 2013 Davide Principi <davide.principi@nethesis.it> - 1.2.0-1.ns6
+- NethServer::Service: synchronize service status prop and chkconfig - Feature #2067 [NethServer]
+- NethServer::Event: removed old event-queue component - Feature #1871 [NethServer]
+
 * Mon Jun 17 2013 Davide Principi <davide.principi@nethesis.it> - 1.1.2-1.ns6
 - Remove escaped #012 (LF) in system logs - Enhancement #2018 [NethServer]
 
