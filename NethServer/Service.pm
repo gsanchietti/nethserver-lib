@@ -71,9 +71,10 @@ sub stop
 }
 
 
-=head2 is_enabled($daemon)
+=head2 is_enabled($daemon, $configurationDb)
 
-Check if $daemon is enabled in the current runlevel. Example
+Check if $daemon is enabled in config database. Optionally, you can
+pass an already opened esmith::ConfigDB object in $configDb. Example:
 
   if(is_enabled($daemon)) {
      start($daemon);
@@ -83,20 +84,15 @@ Check if $daemon is enabled in the current runlevel. Example
 sub is_enabled
 {
     my $daemon = shift;
-    my $configurationDb = esmith::ConfigDB->open_ro();
-    my $status = $configurationDb->get_prop($daemon, 'status') || 'unknown';
+    my $configDb = shift;
 
-    if($status ne 'enabled') {
-	return 0;
+    if( ! defined $configDb) {
+	$configDb = esmith::ConfigDB->open_ro();
     }
 
-    my %runlevels = map { $_ => 1 } split(',', $configurationDb->get_prop($daemon, 'Runlevels'));
+    my $status = $configDb->get_prop($daemon, 'status') || 'unknown';
 
-    my $currentRunlevel = qx('/sbin/runlevel');
-    chomp($currentRunlevel);
-    $currentRunlevel = [split(' ', $currentRunlevel)]->[1];
-
-    if( $runlevels{$currentRunlevel} == 1 ) {
+    if($status eq 'enabled') {
 	return 1;
     }
 
