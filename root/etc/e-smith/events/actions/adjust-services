@@ -41,14 +41,25 @@ my $conf = esmith::ConfigDB->open_ro || die "Couldn't open config db";
 foreach my $service (grep { !/^\./ } $dh->read())
 {
     my $s = $conf->get($service);
-    if( ! $s) 
-    {
-	warn "No conf db entry for service $service\n";
-	next;
-    } elsif ( ! NethServer::Service::is_enabled($service)) {
-        NethServer::Service::stop($service);
+    if( ! $s) {
+	warn "[WARNING] No conf db entry for service $service\n";
 	next;
     }
+
+    if (NethServer::Service::is_enabled($service, $conf)) {
+	#
+        # Enable automatic startup:
+        #
+	NethServer::Service::set_service_startup($service, 1);
+    } else {
+	# 
+	# Stop the service (conditionally) and disable automatic startup:
+	# 
+        NethServer::Service::stop($service);
+	NethServer::Service::set_service_startup($service, 0);
+	next;
+    }
+
     my $f =  "services2adjust/$service";
     
     my @actions;
@@ -66,14 +77,14 @@ foreach my $service (grep { !/^\./ } $dh->read())
 	}
 	else
 	{
-	    warn "Could not open $f: $!";
+	    warn "[ERROR] Could not open $f: $!";
 	}
     }
 
 
     foreach (@actions)
     {
-	warn "adjusting service $service ($_)\n";
+	warn "[INFO] Adjusting service $service ($_)\n";
 	system('/etc/rc.d/init.d/' . $service, $_);	
     }
 
