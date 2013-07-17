@@ -99,4 +99,24 @@ sub is_enabled
     return 0;
 }
 
+=head2 set_service_startup($service, $action)
+
+Enable/disable the $service automatic bootstrap startup. If $action is
+true enable it, otherwise the service is disabled.
+
+Returns 1 on success, 0 on failure.
+
+=cut
+sub set_service_startup
+{
+    my $service = shift;
+    my $action = shift;
+
+    if(system('/sbin/chkconfig', $service, $action ? 'on' : 'off') != 0) {
+	return 0; # FAILURE
+    }
+
+    return 1; # OK
+}
+
 1;
