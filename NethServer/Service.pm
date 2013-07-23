@@ -3,7 +3,7 @@
 #
 
 #
-# Copyright (C) 2012 Nethesis S.r.l.
+# Copyright (C) 2013 Nethesis S.r.l.
 # http://www.nethesis.it - support@nethesis.it
 # 
 # This script is part of NethServer.
@@ -27,54 +27,130 @@ package NethServer::Service;
 use strict;
 use esmith::ConfigDB;
 
+our $legacySupport = 1;
+
 =head1 NAME
 
 NethServer::Service module
 
 =cut
 
-=head2 start($daemon)
+=head2 ->new
+
+Create a Service object
+
+Arguments:
+
+=over 1
+
+=item $serviceName
+
+The service to wrap
+
+=item $configDb (optional)
+
+An opened Configuration database
+
+=back
+
+=cut
+sub new 
+{
+    my $class = shift;
+    my $serviceName = shift;
+    my $configDb = shift;
+
+    if( ! $configDb ) {
+	$configDb = esmith::ConfigDB->open_ro() || die("Could not open ConfigDB");
+    }
+   
+    my $self = {
+	'serviceName' => $serviceName,
+	'configDb' => $configDb,
+	'controlCommand' => '/sbin/service',
+	'verbose' => 0
+    };
+
+
+    bless $self, $class;
+
+    return $self;
+}
+
+
+=head2 ->start
     
-Start $daemon if it is stopped
+Start the service if it is stopped
+
+WARNING: Static invocation is supported for backward compatibility and
+will be removed in the future.
 
 =cut
 sub start
 {
-    my $service = '/sbin/service';
-    my $daemon = shift;
+    my $self = shift;
 
-    qx($service $daemon status >/dev/null 2>&1);
-    if ( $? != 0 ) {
-	qx($service $daemon start);
+    if( $legacySupport && ! ref($self) ) {
+	my $daemon = $self;
+	$self = NethServer::Service->new($daemon);
     }
-    return ($? == 0 ? 1 : 0);
+
+    if ( ! $self->is_running() ) {
+	return $self->_set_running(1);
+    }
+
+    return 0;
 }
 
 
-=head2 stop($daemon)
+=head2 ->stop
     
-Stop $daemon if it is running
+Stop the service if it is running
+
+WARNING: Static invocation is supported for backward compatibility and
+will be removed in the future.
 
 =cut
 sub stop
 {
-    my $service = '/sbin/service';
-    my $daemon = shift;
+    my $self = shift;
 
-    qx($service $daemon status >/dev/null 2>&1);
-    if ( $? != 0 ) {
-	return 0;
-    } 
+    if( $legacySupport && ! ref($self) ) {
+	my $daemon = $self;
+	$self = NethServer::Service->new($daemon);
+    }
 
-    qx($service $daemon stop >/dev/null 2>&1);
-    return ($? == 0 ? 1 : 0);
+    if($self->is_running()) {  
+	return $self->_set_running(0);
+    }
+
+    return 0;
 }
 
 
-=head2 is_enabled($daemon, $configurationDb)
+=head2 ->is_configured
 
-Check if $daemon is enabled in config database. Optionally, you can
-pass an already opened esmith::ConfigDB object in $configDb. Example:
+Check if the service is defined in configuration database
+
+=cut
+sub is_configured
+{
+    my $self = shift;
+    my $record = $self->{'configDb'}->get($self->{'serviceName'});
+    if(defined $record && $record->prop('type') eq 'service') {
+	return 1;
+    }
+    return 0;
+}
+
+
+=head2 ->is_enabled
+
+Check if the service is enabled in configuration database. 
+
+WARNING: Static invocation is supported for backward compatibility and
+will be removed in the future. Optionally, you can pass an already
+opened esmith::ConfigDB object in $configDb. Example:
 
   if(is_enabled($daemon)) {
      start($daemon);
@@ -83,14 +159,18 @@ pass an already opened esmith::ConfigDB object in $configDb. Example:
 =cut
 sub is_enabled
 {
-    my $daemon = shift;
-    my $configDb = shift;
+    my $self = shift;
 
-    if( ! defined $configDb) {
-	$configDb = esmith::ConfigDB->open_ro();
+    if( $legacySupport && ! ref($self) ) {
+	my $daemon = shift;
+	my $configDb = shift;
+
+	$configDb = $daemon;
+	$daemon = $self;
+	$self = NethServer::Service->new($daemon, $configDb);
     }
 
-    my $status = $configDb->get_prop($daemon, 'status') || 'unknown';
+    my $status = $self->{'configDb'}->get_prop($self->{'serviceName'}, 'status') || 'unknown';
 
     if($status eq 'enabled') {
 	return 1;
@@ -99,23 +179,123 @@ sub is_enabled
     return 0;
 }
 
-=head2 set_service_startup($service, $action)
+=head2 ->is_owned
 
-Enable/disable the $service automatic bootstrap startup. If $action is
-true enable it, otherwise the service is disabled.
-
-Returns 1 on success, 0 on failure.
+Check if the service is owned by a currently installed package.
 
 =cut
-sub set_service_startup
+sub is_owned
 {
-    my $service = shift;
+    my $self = shift;
+    my $typePath = '/etc/e-smith/db/configuration/defaults/' . $self->{'serviceName'} . '/type';
+
+    if( -f $typePath ) {
+	open(FH, '<', $typePath) || warn "[ERROR] $typePath:" . $! . "\n";
+	my $line = <FH>;
+	chomp $line;
+	if($line eq 'service') {
+	    return 1;
+	}
+	close(FH);
+    }
+    return 0;
+}
+
+=head2 ->is_running
+
+Check if the service is running.
+
+=cut
+sub is_running
+{
+    my $self = shift;
+
+    # FIXME: caching of the result is disabled. To save a system()
+    # call we can cache the result but a cache-invalidation must be
+    # implemented:
+    if( 1 || ! defined $self->{'isRunning'} ) {
+	$self->{'isRunning'} = system($self->{'controlCommand'} . ' ' .
+				      $self->{'serviceName'} . ' ' .
+				      'status &>/dev/null') == 0;
+    }
+
+    return $self->{'isRunning'};
+}
+
+=head2 ->adjust
+
+Adjust the service startup state and running state according to its
+configuration, status prop and the owning package installation status.
+
+Returns the service object itself.
+
+=cut
+sub adjust
+{
+    my $self = shift;
     my $action = shift;
 
-    if(system('/sbin/chkconfig', $service, $action ? 'on' : 'off') != 0) {
+    $$action = '';
+
+    if($self->is_configured()) {
+	my $staticState = $self->is_owned() && $self->is_enabled();
+
+	$self->_set_startup($staticState);
+	if($staticState != $self->is_running()) {
+	    $self->_set_running($staticState);
+	    $$action = $staticState ? 'start' : 'stop';
+	} 
+    } 
+
+    return $self;
+}
+
+=head2 ->get_name
+
+Return the service name
+
+=cut
+sub get_name
+{
+    my $self = shift;
+    return $self->{'serviceName'};
+}
+
+##################################################
+# Private methods
+##################################################
+
+#
+# Enable/disable the service automatic bootstrap startup. 
+#
+sub _set_startup
+{
+    my $self = shift;
+    my $action = shift;
+
+    if(system('/sbin/chkconfig', $self->{'serviceName'}, $action ? 'on' : 'off') != 0) {
 	return 0; # FAILURE
     }
 
+    return 1; # OK
+}
+
+#
+# Start/stop the service 
+#
+sub _set_running
+{
+    my $self = shift;
+    my $state = shift;
+
+    if(system($self->{'controlCommand'} . 
+	      ' ' . $self->{'serviceName'} . 
+	      ' ' . ($state ? 'start' : 'stop')) != 0) {
+	$self->{'isRunning'} = 0;
+	return 0; # FAILURE
+    }
+
+    $self->{'isRunning'} = 1;
     return 1; # OK
 }
 
