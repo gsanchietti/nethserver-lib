@@ -21,9 +21,9 @@
 #
 
 use esmith::Build::CreateLinks qw(:all);
-use File::Path;
 
-# Spool directory for queued events. Refs #843
-File::Path::make_path('root/var/spool/nethserver');
+
+
+
 
 
