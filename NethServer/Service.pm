@@ -99,7 +99,7 @@ sub start
 	return $self->_set_running(1);
     }
 
-    return 0;
+    return 1;
 }
 
 
@@ -124,7 +124,7 @@ sub stop
 	return $self->_set_running(0);
     }
 
-    return 0;
+    return 1;
 }
 
 
