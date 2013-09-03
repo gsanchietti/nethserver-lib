@@ -11,9 +11,6 @@ use Exporter;
 use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 use esmith::Logger;
 use File::Basename;
-use File::Temp qw/ :mktemp /;
-use esmith::ConfigDB;
-use POSIX;
 
 =pod
 
@@ -124,26 +121,6 @@ sub event_signal
         print LOG $log;
     }
 
-    # Implement event queuing for clustered systems. 
-    my $qfifo = "/var/spool/eventq";
-    return $exitcode unless (-e $qfifo);
-
-    # Ensure we aren't called by a cascaded event. We only need to
-    # queue the top-level of such a beast.
-    my $ppid = getppid();
-    open F, "/proc/$ppid/cmdline";
-    my $cmd = <F>;
-    close F;
-
-    unless($cmd =~ "/etc/e-smith/event")
-    {
-        my $fd = POSIX::open($qfifo, &POSIX::O_WRONLY) or return $exitcode;
-        my $argstr = join(" ",$event,@args);
-        $argstr .= "\n";
-        POSIX::write($fd, $argstr, length($argstr));
-        POSIX::close($fd);
-    }
-
     return $exitcode;
 }
 
@@ -172,49 +149,5 @@ sub _mysystem
     return $?;
 }
 
-#------------------------------------------------------------
-# Attempt to eval perl handlers for efficiency - not currently used
-# return 1 on success; 0 on error
-#------------------------------------------------------------
-sub _runHandler($)
-{
-    my ($filename) = @_;
-
-    open(FILE, $filename) || die "Couldn't open $filename: $!";
-    my @lines = <FILE>;
-    close FILE;
-
-    my $string = "";
-
-    unless ( $lines[0] =~ /^#!.*perl/ )
-    {
-        # STDOUT and STDERR are both redirected going to LOG
-        return (system($filename, @ARGV) == 0) ? 1 : 0;
-    }
-
-    map { $string .= $_ } @lines;
-
-    print "Eval of $filename...";
-
-    # Override 'exit' in symbol table for handlers
-    sub exit { die "$_[0]\n" };
-    *CORE::GLOBAL::exit = \&esmith::event::exit;
-
-    my $status = eval $string;
-    chomp $@;
-
-    # if $@ is defined, then die or exit was called - use that status
-    $status = $@ if defined $@;
-    
-    # for all exit values except 0, assume failure
-    if ($@)
-    {
-        print "Eval of $filename failed:  $status\n";
-        return 0;
-    }
-
-    print "$status\n";
-    return 1;
-}
 
 1;
