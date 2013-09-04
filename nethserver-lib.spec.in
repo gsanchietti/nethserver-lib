@@ -31,15 +31,18 @@ Common script libraries for the e-smith system
 perl createlinks
 
 # davidep: relocate perl modules under default perl vendorlib directory:
-mkdir -p root%{perl_vendorlib}
-mv -v esmith root%{perl_vendorlib}
-mv -v NethServer root%{perl_vendorlib}
+mkdir -p root%{perl_vendorlib} root%{python_sitelib}
+mv -v lib/perl/* root%{perl_vendorlib}
+mv -v lib/python/* root%{python_sitelib}
 
 %install
 rm -rf $RPM_BUILD_ROOT
 (cd root ; find . -depth -not -name '*.orig' -print | cpio -dump $RPM_BUILD_ROOT)
 rm -f %{name}-%{version}-%{release}-filelist
-%{genfilelist} $RPM_BUILD_ROOT >%{name}-%{version}-%{release}-filelist
+%{genfilelist} $RPM_BUILD_ROOT \
+               --dir /var/spool/ptrack 'attr(1777,root,root)' \
+               --dir /var/run/ptrack 'attr(1777,root,root)' \
+	       >%{name}-%{version}-%{release}-filelist
 echo "%doc COPYING" >> %{name}-%{version}-%{release}-filelist
 
 %clean

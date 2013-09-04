@@ -1,0 +1,62 @@
+#!/usr/bin/python
+
+import nethserver.ptrack
+import logging            
+import os
+import sys
+import signal
+import json
+import io
+import hashlib
+
+if __name__ == "__main__":
+    if("PTRACK_DEBUG" in os.environ):
+        logging.getLogger().setLevel(logging.DEBUG)        
+
+    if("PTRACK_SOCKETPATH" in os.environ):
+        socket_path = os.environ["PTRACK_SOCKETPATH"]
+    else:
+        socket_path = os.environ["PTRACK_SOCKETPATH"] \
+                      = '/var/run/ptrack-%d.sock' % os.getpid()
+
+    state = nethserver.ptrack.ProgressState()
+    server = nethserver.ptrack.TrackerServer(socket_path, state, True)
+    exit_code = 0
+
+    def on_sigchld(signum, frame):
+        global exit_code
+        logging.debug("Received signal: %d" % signum)
+        exit_code = os.WEXITSTATUS(os.wait()[1])
+        logging.debug("Child exit code: %d" % exit_code)
+        server.close()
+
+    def dump():
+        global exit_code
+        oldmask = os.umask(0077)
+        dumpfd = io.open('/var/spool/ptrack/%.16s.dump' % hashlib.md5(socket_path).hexdigest(), 'wb')
+        json.dump({'exit_code': exit_code, 'progress': state.query('progress'), 'tasks': state.query('tasks')}, dumpfd); 
+        dumpfd.close()
+        os.umask(oldmask)
+
+    signal.signal(signal.SIGCHLD, on_sigchld)
+
+    if(len(sys.argv) < 2):
+        sys.stderr.write("Listening on path %s\nType ^C to shutdown the server.\n" % socket_path)
+        try:
+            server.loop()
+        except KeyboardInterrupt:
+            sys.stderr.write("\nInterrupted!\n")
+            exit(0)        
+
+    if(os.fork()):
+        server.loop()
+        dump()
+        exit(exit_code)
+    else:
+        server.close()
+        logging.debug("Spawning %s" % sys.argv)
+        try:
+            os.execv(sys.argv[1], sys.argv[1:])
+        except Exception, e:
+            sys.stderr.write("%s: %s\n" % (sys.argv[1], e))
+

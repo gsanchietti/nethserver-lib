@@ -23,6 +23,7 @@ use strict;
 use Errno;
 use DirHandle;
 use NethServer::Service;
+use NethServer::TrackerClient;
 
 my $event = shift || die "must give event name parameter";
 my $dir = "/etc/e-smith/events/$event";
@@ -39,12 +40,22 @@ use esmith::ConfigDB;
 # init scripts.  See /etc/sysconfig/init and /etc/init.d/functions
 $ENV{'BOOTUP'}='simple';
 
-foreach my $service (grep { !/^\./ } $dh->read())
+my @services = grep { !/^\./ } $dh->read();
+
+my $tracker = NethServer::TrackerClient->new();
+my %tasks = ();
+
+foreach (@services) {
+    $tasks{$_} = $tracker->declare_task("Adjust service $_");
+}
+
+foreach my $service (@services)
 {
     my $s = NethServer::Service->new($service);
 
     my $action = '';
     my @actions = ();
+    my $failed = 0;
 
     # Start or stop the service, if its running state is not what we expect:
     $s->adjust(\$action);
@@ -68,14 +79,21 @@ foreach my $service (grep { !/^\./ } $dh->read())
 
     }
 
+    my $progress = 0.1;
     foreach (@actions) {
 	warn "[INFO] service $service $_\n";
+	$tracker->set_task_progress($tasks{$service}, $progress, $_);
 	if(system('/etc/rc.d/init.d/' . $service, $_) != 0) {
 	    warn "[WARNING] service $service $_ failed!\n";
 	    $errors++;	
+	    $failed = 1;
 	}
+	$progress += 0.1;
     }	    
+    $tracker->set_task_done($tasks{$service}, "", $failed);
+    
 }
+
 
 exit($errors == 0 ? 0 : 1);
 
