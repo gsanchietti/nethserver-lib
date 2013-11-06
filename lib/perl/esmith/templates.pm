@@ -734,6 +734,8 @@ sub processTemplate {
         }
         return $text;
     }
+
+    return 1;
 }
 
 =begin _private

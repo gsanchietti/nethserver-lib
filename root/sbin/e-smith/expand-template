@@ -42,5 +42,9 @@ if ( -f $options{'output_filename'} )
     $args{PERMS} = $f->mode;
 }
 
-esmith::templates::processTemplate(\%args);
+my $result = esmith::templates::processTemplate(\%args);
+if( ! $result ) {
+    exit(1);
+}
+exit(0);
 
