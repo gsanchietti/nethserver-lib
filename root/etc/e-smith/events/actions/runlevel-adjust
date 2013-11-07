@@ -23,13 +23,21 @@
 use strict;
 use esmith::ConfigDB;
 use NethServer::Service;
+use NethServer::TrackerClient;
 
 my $event = shift || die("Missing event argument!");
 my $confDb = esmith::ConfigDB->open_ro();
+my $trackerClient = NethServer::TrackerClient->new();
+my @services = map { $_->key } $confDb->get_all_by_prop('type' => 'service');
+my %tasks = ();
 
-map { 
-    NethServer::Service->new($_->key, $confDb)->adjust(); 
-} $confDb->get_all_by_prop('type' => 'service');
+foreach (@services) {
+    $tasks{$_} = $trackerClient->declare_task("Adjust service $_");
+}
 
+foreach (@services) {
+    NethServer::Service->new($_, $confDb)->adjust(); 
+    $trackerClient->set_task_done($tasks{$_});
+}
 
-
+exit(0);
