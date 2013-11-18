@@ -1,0 +1,14 @@
+#
+# 20pre_start
+#
+pre-start script
+    STAT=`/sbin/e-smith/config getprop {$name} status`
+    if test "x${STAT}" = "xenabled" \
+       -a -f "/etc/e-smith/db/configuration/defaults/{$name}/status" \
+       -a -x {$daemon_bin}; then
+       exit 0;
+    fi
+    stop; exit 0;
+end script
+
+
