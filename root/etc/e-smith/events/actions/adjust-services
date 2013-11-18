@@ -83,7 +83,7 @@ foreach my $service (@services)
     foreach (@actions) {
 	warn "[INFO] service $service $_\n";
 	$tracker->set_task_progress($tasks{$service}, $progress, $_);
-	if(system('/etc/rc.d/init.d/' . $service, $_) != 0) {
+	if($s->can($_) && ! $s->$_() ) {
 	    warn "[WARNING] service $service $_ failed!\n";
 	    $errors++;	
 	    $failed = 1;

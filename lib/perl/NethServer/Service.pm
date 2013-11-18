@@ -63,12 +63,20 @@ sub new
     if( ! $configDb ) {
 	$configDb = esmith::ConfigDB->open_ro() || die("Could not open ConfigDB");
     }
-   
+
+    my $backend = 'none';
+    
+    if( -e "/etc/init/${serviceName}.conf") {
+	$backend = 'upstart';
+    } elsif( -e "/etc/rc.d/init.d/${serviceName}") {
+	$backend = 'sysv';
+    }
+
     my $self = {
 	'serviceName' => $serviceName,
 	'configDb' => $configDb,
-	'controlCommand' => '/sbin/service',
-	'verbose' => 0
+	'verbose' => 0,
+	'backend' => $backend
     };
 
 
@@ -125,6 +133,58 @@ sub stop
     }
 
     return 1;
+}
+
+=head2 ->condrestart
+
+=cut
+sub condrestart
+{
+    my $self = shift;
+
+    if($self->{'backend'} eq 'sysv') {
+	return system($self->_get_command('condrestart')) == 0;	
+    } elsif($self->{'backend'} eq 'upstart' && $self->is_running()) {
+	return $self->restart();
+    } 
+    return 0;
+}
+
+=head2 ->restart
+
+=cut
+sub restart
+{
+    my $self = shift;
+
+    if($self->{'backend'} eq 'sysv') {
+	return system($self->_get_command('restart')) == 0;	
+    } elsif($self->{'backend'} eq 'upstart') {
+	return system('/sbin/restart', $self->{'serviceName'}) == 0;
+    } 
+
+    return 0;
+}
+
+=head2 ->reload
+
+=cut
+sub reload
+{
+    my $self = shift;
+
+    if($self->{'backend'} eq 'sysv') {
+	return system($self->_get_command('reload')) == 0;
+    } elsif($self->{'backend'} eq 'upstart') {
+	# Test if a "reload" task is defined:
+	if( -e "/etc/init/$self->{serviceName}-reload.conf") {
+	    return system('/sbin/start', "$self->{serviceName}-reload") == 0;
+	} else {
+	    return system('/sbin/reload', $self->{'serviceName'}) == 0;
+	}
+    } 
+
+    return 0;
 }
 
 
@@ -210,15 +270,18 @@ sub is_running
 {
     my $self = shift;
 
-    # FIXME: caching of the result is disabled. To save a system()
-    # call we can cache the result but a cache-invalidation must be
-    # implemented:
-    if( 1 || ! defined $self->{'isRunning'} ) {
-	$self->{'isRunning'} = system($self->{'controlCommand'} . ' ' .
-				      $self->{'serviceName'} . ' ' .
-				      'status &>/dev/null') == 0;
+    if($self->{'backend'} eq 'upstart') {
+	# DBus hack to get job instance running state in exit code:
+	$self->{'isRunning'} = _silent_system(
+	    qw(/bin/dbus-send --system --print-reply --dest=com.ubuntu.Upstart), 
+	    '/com/ubuntu/Upstart/jobs/' . $self->{'serviceName'} . '/_', 
+	    qw(org.freedesktop.DBus.Properties.GetAll string:'')) == 0;
+    } elsif($self->{'backend'} eq 'sysv') {
+	$self->{'isRunning'} = _silent_system($self->_get_command('status')) == 0;
+    } else {
+	$self->{'isRunning'} = 0;
     }
-
+   
     return $self->{'isRunning'};
 }
 
@@ -235,15 +298,13 @@ sub adjust
     my $self = shift;
     my $action = shift;
 
-    $$action = '';
-
     if($self->is_configured()) {
 	my $staticState = $self->is_owned() && $self->is_enabled();
-
-	$self->_set_startup($staticState);
+	if($self->{'backend'} eq 'sysv') {
+	    $self->_set_sysv_startup($staticState);
+	}
 	if($staticState != $self->is_running()) {
 	    $self->_set_running($staticState);
-	    $$action = $staticState ? 'start' : 'stop';
 	} 
     } 
 
@@ -268,7 +329,7 @@ sub get_name
 #
 # Enable/disable the service automatic bootstrap startup. 
 #
-sub _set_startup
+sub _set_sysv_startup
 {
     my $self = shift;
     my $action = shift;
@@ -288,9 +349,7 @@ sub _set_running
     my $self = shift;
     my $state = shift;
 
-    if(system($self->{'controlCommand'} . 
-	      ' ' . $self->{'serviceName'} . 
-	      ' ' . ($state ? 'start' : 'stop')) != 0) {
+    if(system($self->_get_command($state ? 'start' : 'stop')) != 0) {
 	$self->{'isRunning'} = 0;
 	return 0; # FAILURE
     }
@@ -298,5 +357,42 @@ sub _set_running
     $self->{'isRunning'} = 1;
     return 1; # OK
 }
+
+#
+# Get the right command to control the service
+#
+sub _get_command
+{
+    my $self = shift;
+    my $action = shift;
+    my $command;
+
+    if($self->{'backend'} eq 'upstart') {
+	$command = join(' ', '/sbin/initctl', $action, ,$self->{'serviceName'});
+    } elsif($self->{'backend'} eq 'sysv') {
+	$command = join(' ', '/sbin/service', $self->{'serviceName'}, $action);
+    } else {
+	$command = '/bin/false';
+    }
+
+    return $command;
+}
+
+
+#
+# Execute system, closing STDOUT and STDERR descriptors
+#
+sub _silent_system
+{
+    if(fork()) {
+	wait();
+	return $?;
+    } else {
+	open(STDOUT, '/dev/null');
+	open(STDERR, '/dev/null');
+	exec(@_);
+    }
+}
+
 
 1;
