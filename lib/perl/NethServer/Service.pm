@@ -274,7 +274,8 @@ sub is_running
 	# DBus hack to get job instance running state in exit code:
 	$self->{'isRunning'} = _silent_system(
 	    qw(/bin/dbus-send --system --print-reply --dest=com.ubuntu.Upstart), 
-	    '/com/ubuntu/Upstart/jobs/' . $self->{'serviceName'} . '/_', 
+	    sprintf('/com/ubuntu/Upstart/jobs/%s/_', 
+		    _escape_dbus($self->{'serviceName'})), 
 	    qw(org.freedesktop.DBus.Properties.GetAll string:'')) == 0;
     } elsif($self->{'backend'} eq 'sysv') {
 	$self->{'isRunning'} = _silent_system($self->_get_command('status')) == 0;
@@ -394,5 +395,14 @@ sub _silent_system
     }
 }
 
+#
+# DBus job names have special chars escaped
+#
+sub _escape_dbus
+{
+    my $s = shift;
+    $s =~ s/-/_2d/g;
+    return $s;
+}
 
 1;
