@@ -36,6 +36,13 @@ foreach (@services) {
 }
 
 foreach (@services) {
+    # If both Upstart and SysV scripts are present disable SysV:    
+    if( -r "/etc/rc.d/init.d/$_" 
+	&& -r "/etc/init/$_.conf" 
+	&& system("/sbin/chkconfig", $_) == 0) {
+	system("/sbin/service", $_, "stop");
+	system("/sbin/chkconfig", $_, "off");    
+    }
     NethServer::Service->new($_, $confDb)->adjust(); 
     $trackerClient->set_task_done($tasks{$_});
 }
