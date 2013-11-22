@@ -29,6 +29,7 @@ my $event = shift or die "Event name is required\n";
 
 my %args;
 my ($param, $value);
+my $errors = 0;
 my $templates_dir = "/etc/e-smith/events/$event/templates2expand";
 exit 0 unless -d $templates_dir;
 
@@ -42,9 +43,7 @@ find({
 	no_chdir => 1,
 	follow => 0,
 	wanted => sub { if(-f $_) { push @templateList, $_; } },
-    },
-    '.'
-    );
+     }, '.');
 
 my $tracker = NethServer::TrackerClient->new();
 
@@ -67,7 +66,11 @@ foreach my $filename (@templateList) {
 		OUTPUT_FILENAME => $filename,
 	    });    
 
+    if( ! $result) {
+	warn "[WARNING] expansion of $filename failed\n";
+	$errors++;
+    }
     $tracker->set_task_done($tasks{$filename}, "", $result ? 0 : 1);
 }
 
-
+exit($errors == 0 ? 0 : 1);
