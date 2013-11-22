@@ -683,10 +683,12 @@ sub processTemplate {
 	  || carp "ERROR: Can't chmod file $tempfile: $!\n";
 	
         unless ( -f $outputfile ) {
-            rename( "$tempfile", "$outputfile" )
-              or carp(
-                "ERROR: Could not rename $tempfile " . "to $outputfile: $!\n" );
-            return;
+            if( ! rename( "$tempfile", "$outputfile" )) {
+		carp("ERROR: Could not rename $tempfile " . "to $outputfile: $!\n" );
+		return 0;
+	    } else {
+		return 1;
+	    }
         }
 
         use Digest::MD5;
