@@ -129,7 +129,14 @@ sub event_signal
 	my $elapsedTime = tv_interval($startTime, $endTime);
 	my $log = "$handler=action|Event|$event|Action|$handler";
 	$log .= "|Start|@$startTime|End|@$endTime|Elapsed|$elapsedTime";
-	$log .= "|Status|$status" if $status;
+	if($status) {
+	    if($status & 0xFF) {
+		$log .= '|Signal|' . ($status & 0xFF);
+	    } else {
+		$log .= '|ExitCode|' . ($status >> 8);
+	    }
+	    $log .= '|Status|' . ($status)
+	}
 	print LOG $log;
 	$tracker->set_task_done($tasks{$handler}, "", $status);
     }
@@ -144,16 +151,12 @@ sub _mysystem
     my $pid = open(PIPE, "-|");
     die "Failed to fork: $!\n" unless defined $pid;
 
-    if ($pid)
-    {
+    if ($pid) {
         # Parent
-        while (my $line = <PIPE>)
-        {
+        while (my $line = <PIPE>) {
             print $logger $line;
         }
-    }
-    else
-    {
+    } else {
         # Child
         open(STDERR, ">&STDOUT");
 	$ENV{'PTRACK_TASKID'} = $tasks->{$filename};
