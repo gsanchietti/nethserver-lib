@@ -291,25 +291,38 @@ sub is_running
 Adjust the service startup state and running state according to its
 configuration, status prop and the owning package installation status.
 
-Returns the service object itself.
+The output parameter $action is set to 'start' or 'stop' if the
+service is actually started or stopped.
+
+Parameters:
+    $action string by ref (OUT) 
+
+Returns a boolean value: success/failure
 
 =cut
 sub adjust
 {
     my $self = shift;
     my $action = shift;
+    my $success = 1;
 
     if($self->is_configured()) {
 	my $staticState = $self->is_owned() && $self->is_enabled();
 	if($self->{'backend'} eq 'sysv') {
-	    $self->_set_sysv_startup($staticState);
+	    if( ! $self->_set_sysv_startup($staticState)) {
+		$success = 0;
+	    }
 	}
 	if($staticState != $self->is_running()) {
-	    $self->_set_running($staticState);
+	    if($self->_set_running($staticState)) {
+		$$action = $staticState ? 'start' : 'stop';
+	    } else {
+		$success = 0;
+	    }
 	} 
     } 
 
-    return $self;
+    return $success;
 }
 
 =head2 ->get_name
@@ -351,11 +364,10 @@ sub _set_running
     my $state = shift;
 
     if(system($self->_get_command($state ? 'start' : 'stop')) != 0) {
-	$self->{'isRunning'} = 0;
 	return 0; # FAILURE
     }
 
-    $self->{'isRunning'} = 1;
+    $self->{'isRunning'} = $state ? 1 : 0;
     return 1; # OK
 }
 
