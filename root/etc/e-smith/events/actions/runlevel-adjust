@@ -30,6 +30,7 @@ my $confDb = esmith::ConfigDB->open_ro();
 my $trackerClient = NethServer::TrackerClient->new();
 my @services = map { $_->key } $confDb->get_all_by_prop('type' => 'service');
 my %tasks = ();
+my $errors = 0;
 
 foreach (@services) {
     $tasks{$_} = $trackerClient->declare_task("Adjust service $_");
@@ -40,11 +41,14 @@ foreach (@services) {
     if( -r "/etc/rc.d/init.d/$_" 
 	&& -r "/etc/init/$_.conf" 
 	&& system("/sbin/chkconfig", $_) == 0) {
-	system("/sbin/service", $_, "stop");
-	system("/sbin/chkconfig", $_, "off");    
+	system("/sbin/service", $_, "stop") == 0 or $errors++;
+	system("/sbin/chkconfig", $_, "off") == 0 or $errors++;    
     }
-    NethServer::Service->new($_, $confDb)->adjust(); 
-    $trackerClient->set_task_done($tasks{$_});
+    my $adj = NethServer::Service->new($_, $confDb)->adjust();    
+    if( ! $adj) {
+	$errors++;
+    }
+    $trackerClient->set_task_done($tasks{$_}, undef, $adj ? 0 : 1);
 }
 
-exit(0);
+exit($errors > 0 ? 1 : 0);
