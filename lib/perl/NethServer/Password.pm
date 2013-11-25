@@ -46,8 +46,8 @@ sub new
 	'defaultDir' => '/var/lib/nethserver/secrets',
 	'dirty' => 1,
 	'secret' => undef,
-	'symbols' => [ map { chr } (ord('!')..ord('Z'), ord('a')..ord('z')) ],
-	'length' => 12,
+	'symbols' => ['A'..'Z', 'a'..'z', '0'..'9', '_'],
+	'length' => 16,
 	'autoSave' => $fileName ? 1 : 0,
     };
 
