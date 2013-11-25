@@ -22,6 +22,8 @@ use File::Basename;
 use File::stat;
 use FileHandle;
 
+use NethServer::Password;
+
 =pod
 
 =head1 NAME
@@ -696,20 +698,13 @@ sub setUnixPasswordRequirePrevious ($$$)
 Returns a random generated sha1 hash using urandom.
 Returns undef if the hash could not be generated/retrieved.
 
+DEPRECATED see NethServer::Password module
+
 =cut
 
 sub genRandomHash
 {
-
-    my $hash = undef;
-
-    # Generate a suitable new has, store it in the prop
-    # and return it to the caller.
-
-    use Digest::SHA1  qw(sha1_hex);
-    $hash = sha1_hex(rand().localtime());
-
-    return $hash;
+    return NethServer::Password->new(undef, {'symbols' => ['a'..'f', '0'..'9'], 'length' => 40})->getAscii();
 }
 
 =pod
@@ -721,66 +716,14 @@ If $store_file is not empty, try to read the password from the file.
 If $store_file not exists, generate a new random password and save it on the file.
 Returns undef if the password could not be generated/retrieved.
 
+DEPRECATED see NethServer::Password module
+
 =cut
 
 sub genRandomPassword
 {
-
-    my $store_file = shift || "";
-    my $password = undef;
-
-    if ($store_file ne "") {
-    # Read the password from the file $store_file if it exists
-        if ( -f $store_file )
-        {
-            open( PW, "</$store_file" ) || die "Could not open $store_file password file.\n";
-            $password = <PW>;
-            chomp $password;
-            close PW;
-            return $password;
-        }
-    }
-
-
-    # Otherwise generate a suitable new password, store it in the
-    # correct file, and return it to the caller.
-
-    use MIME::Base64 qw(encode_base64);
-
-    unless ( open( RANDOM, "/dev/urandom" ) )
-    {
-        warn "Could not open /dev/urandom: $!";
-        return undef;
-    }
-
-    my $buf = "not set";
-
-    # 57 bytes is a full line of Base64 coding, and contains
-    # 456 bits of randomness - given a perfectly random /dev/urandom
-    if ( read( RANDOM, $buf, 57 ) != 57 )
-    {
-        warn("Short read from /dev/urandom: $!");
-        return undef;
-    }
-    close RANDOM;
-
-
-    $password = encode_base64($buf, "");
-
-    if ($store_file ne "") {
-        my $umask    = umask 0077;
-        unless ( open( WR, ">$store_file" ) )
-        {
-            warn "Could not write $store_file password file.\n";
-            return undef;
-        }
-        print WR "$password\n";
-        close WR;
-        umask $umask;
-        chmod 0600, $store_file;
-   }
-
-   return $password;
+    my $store_file = shift;
+    return NethServer::Password::store($store_file);
 }
 
 =pod

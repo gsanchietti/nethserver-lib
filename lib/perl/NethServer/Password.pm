@@ -3,7 +3,7 @@
 #
 
 #
-# Copyright (C) 2012 Nethesis S.r.l.
+# Copyright (C) 2013 Nethesis S.r.l.
 # http://www.nethesis.it - support@nethesis.it
 # 
 # This script is part of NethServer.
@@ -23,8 +23,7 @@
 #
 
 package NethServer::Password;
-
-use MIME::Base64 qw(encode_base64);
+use strict;
 
 =head1 NAME
 
@@ -32,18 +31,126 @@ NethServer::Password module
 
 =cut
 
-=head2 makePassword($length)
 
-Generate and returns a  random password of $length characters
+=head2 new
 
 =cut
-sub makePassword
+sub new
 {
-    my $length = shift || 16;
-    my $password;
-    open(RANDOM, "<", "/dev/urandom") or { warn "Cannot open /dev/urandom"; return undef };
-    read(RANDOM, $password, 128);
-    encode_base64($password);
-    close(RANDOM);
-    return substr($password, 0, $length);
+    my $class = shift;
+    my $fileName = shift;
+    my $opts = shift;
+
+    my $self = {
+	'fileName' => $fileName,
+	'defaultDir' => '/var/lib/nethserver/secrets',
+	'dirty' => 1,
+	'secret' => undef,
+	'symbols' => [ map { chr } (ord('!')..ord('Z'), ord('a')..ord('z')) ],
+	'length' => 12,
+	'autoSave' => $fileName ? 1 : 0,
+    };
+
+    for (qw(defaultDir symbols length autoSave)) {
+	if(defined $opts->{$_}) {
+	    $self->{$_} = $opts->{$_};
+	}	
+    }
+
+    # Prepend defaultDir if fileName is not an absolute path
+    if(defined $self->{'fileName'} && $self->{'fileName'} !~ m|^/|) {
+	$self->{'fileName'} = $self->{'defaultDir'} . '/' . $self->{'fileName'};
+    }
+
+    bless $self, $class;
+
+    if($self->{'fileName'}) {
+	$self->_load();
+    } else {
+	$self->generate();
+    }
+
+    return $self;
 }
+
+
+=head2 getAscii
+
+=cut
+sub getAscii
+{
+    my $self = shift;
+    return $self->{'secret'};
+}
+
+=head2 generate
+
+=cut
+sub generate
+{
+    my $self = shift;
+    my @sym = @{$self->{'symbols'}};
+    $self->{'secret'} = join('', map $sym[rand(@sym)], 1..$self->{'length'});
+    $self->{'dirty'} = 1;
+    return $self;
+}
+
+sub _load
+{
+    my $self = shift;
+
+    if( ! open(F, '<', $self->{'fileName'})) {
+	return $self->generate();
+    }
+
+    my $data = <F>;
+    close(F);
+
+    chomp($data);
+    $self->{'secret'} = $data;
+    $self->{'dirty'} = 0;
+
+    return $self;
+}
+
+=head2 save
+
+=cut
+sub save
+{
+    my $self = shift;
+    if($self->{'dirty'}) {
+        my $umask = umask 0077;
+        if(open(F, ">", $self->{'fileName'})) {
+	    print F $self->{'secret'} . "\n";
+	    if(close(F)) {	    
+		$self->{'dirty'} = 0;
+	    }
+	} else {
+	    warn "[ERROR] could not store secret into '" . $self->{'fileName'} . "': $!\n";
+	}
+        umask $umask;
+    }
+    return $self;
+}
+
+sub DESTROY
+{
+    my $self = shift;
+    if($self->{'autoSave'}) {
+	$self->save();
+    }
+}
+
+=head2 store
+
+Static shortcut method, compatible with esmith::util::genRandomPassword()
+
+=cut
+sub store
+{
+    my $fileName = shift;
+    return NethServer::Password->new($fileName)->save()->getAscii()
+}
+
+1;

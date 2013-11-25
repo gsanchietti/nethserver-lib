@@ -19,7 +19,6 @@ Requires: perl(Net::IPv4Addr) >= 0.10
 Requires: perl(MIME::Base64)
 Requires: perl(Data::UUID)
 Requires: perl-JSON
-Requires: perl-Digest-SHA1
 
 %description
 Common script libraries for the e-smith system
