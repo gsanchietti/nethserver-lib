@@ -32,6 +32,10 @@ my @services = map { $_->key } $confDb->get_all_by_prop('type' => 'service');
 my %tasks = ();
 my $errors = 0;
 
+# Close STDIN to get rid of console escapes in
+# init scripts.  See /etc/sysconfig/init and /etc/init.d/functions
+close(STDIN);
+
 foreach (@services) {
     $tasks{$_} = $trackerClient->declare_task("Adjust service $_");
 }

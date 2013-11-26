@@ -36,9 +36,9 @@ exit(0) unless $dh; # Nothing to do
 
 use esmith::ConfigDB;
 
-# Set BOOTUP environment variable to get rid of console escapes in
+# Close STDIN to get rid of console escapes in
 # init scripts.  See /etc/sysconfig/init and /etc/init.d/functions
-$ENV{'BOOTUP'}='simple';
+close(STDIN);
 
 my @services = grep { !/^\./ } $dh->read();
 
