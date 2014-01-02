@@ -1062,8 +1062,6 @@ sub initialize_default_databases
             }
 
             $h->close;
-
-            esmith::util::chownFile( "root", "admin", "$dbhome/$file" );
         };
         if ($@)
         {

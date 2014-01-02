@@ -268,9 +268,6 @@ EOF
 
         rename("$filename.$$", $filename)
             or die "Couldn't rename $filename.$$ to $filename: $!";
-
-        my $gid = getgrnam ('admin') || 0;
-        chown (0, $gid, $filename);
     };
 
     if($@) {
