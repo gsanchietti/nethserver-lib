@@ -737,7 +737,7 @@ low-level password changing utilities.
 
 =head2 setUnixSystemPassword($password)
 
-Set the e-smith system password
+Set the root's password
 
 =cut
 
@@ -746,7 +746,12 @@ sub setUnixSystemPassword ($)
     my ($password) = @_;
 
     setUnixPassword( "root",  $password );
-    setUnixPassword( "admin", $password );
+    if(defined getpwnam('admin')) {
+        my $db = esmith::ConfigDB->open_ro();
+	if($db && ($db->get_value('AdminIsNotRoot') || '') eq 'disabled') {
+	    setUnixPassword('admin',  $password);
+	}
+    }
 }
 
 =pod
