@@ -52,6 +52,9 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
+* Wed Feb 05 2014 Davide Principi <davide.principi@nethesis.it> - 2.0.0-1.ns6
+- Move admin user in LDAP DB - Feature #2492 [NethServer]
+
 * Wed Dec 18 2013 Davide Principi <davide.principi@nethesis.it> - 1.4.0-1.ns6
 - Directory: backup service accounts passwords  - Enhancement #2063 [NethServer]
 - Process tracking and notifications - Feature #2029 [NethServer]
