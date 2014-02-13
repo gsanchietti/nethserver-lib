@@ -112,13 +112,13 @@ sub event_signal
     #
     # Relevant messages are tracked by NethServer::TrackerClient
     #------------------------------------------------------------
-    print LOG "Processing event: $event @args";
+    print LOG "Event: $event @args";
 
     #------------------------------------------------------------
     # Run handlers, logging all output.
     #------------------------------------------------------------
     foreach my $handler (@handlerList) {
-	print LOG "Running event handler " . $handlers{$handler};	    
+	#print LOG "Running event handler " . $handlers{$handler};	    
         my $startTime = [gettimeofday];
 	my $status = _mysystem(\*LOG, $handler, $event, \%tasks, @args);
 	if($status != 0) {
@@ -127,20 +127,26 @@ sub event_signal
 	}
 	my $endTime = [gettimeofday];
 	my $elapsedTime = tv_interval($startTime, $endTime);
-	my $log = "$handler=action|Event|$event|Action|$handler";
-	$log .= "|Start|@$startTime|End|@$endTime|Elapsed|$elapsedTime";
+	my $log = "Action: $handler ";
 	if($status) {
 	    if($status & 0xFF) {
-		$log .= '|Signal|' . ($status & 0xFF);
+		$log .= 'FAILED: ' . ($status & 0xFF);
 	    } else {
-		$log .= '|ExitCode|' . ($status >> 8);
+		$log .= 'FAILED: ' . ($status >> 8);
 	    }
-	    $log .= '|Status|' . ($status)
-	}
+	} else {
+            $log .= 'SUCCESS';
+        }
+        $log .= " [$elapsedTime]";
 	print LOG $log;
 	$tracker->set_task_done($tasks{$handler}, "", $status);
     }
 
+    if (!$isSuccess) {
+        print LOG "Event: $event FAILED";
+    } else {
+        print LOG "Event: $event SUCCESS";
+    }
     return $isSuccess;
 }
 
