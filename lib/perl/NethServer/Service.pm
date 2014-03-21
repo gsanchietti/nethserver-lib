@@ -401,8 +401,8 @@ sub _silent_system
 	wait();
 	return $?;
     } else {
-	open(STDOUT, '/dev/null');
-	open(STDERR, '/dev/null');
+	open(STDOUT, '>>/dev/null');
+	open(STDERR, '>&STDOUT');
 	exec(@_);
     }
 }
