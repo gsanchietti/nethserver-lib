@@ -52,6 +52,9 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
+* Mon Mar 24 2014 Davide Principi <davide.principi@nethesis.it> - 2.0.2-1.ns6
+- Bad file descriptor handling in _silent_system function - Bug #2696 [NethServer]
+
 * Wed Feb 26 2014 Davide Principi <davide.principi@nethesis.it> - 2.0.1-1.ns6
 - Clear event log format - Enhancement #2652 [NethServer]
 
