@@ -6,7 +6,7 @@
 
 package esmith::Logger;
 
-use Sys::Syslog qw(:DEFAULT setlogsock);
+use Sys::Syslog qw(:DEFAULT);
 
 =head1 NAME
 
@@ -31,7 +31,6 @@ sub TIEHANDLE
     my $class = ref($_[0]) || $_[0]; shift;
     my $self;
     my $title = shift || 'e-smith';
-    setlogsock 'unix';
     openlog($title, 'pid', 'local1');
     return bless \$self, $class;
 }

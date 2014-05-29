@@ -9,7 +9,7 @@ use strict;
 use vars qw($VERSION);
 $VERSION = 1.45;
 
-use Sys::Syslog qw(:DEFAULT setlogsock);
+use Sys::Syslog qw(:DEFAULT);
 use Fcntl qw(:DEFAULT :flock);
 use Carp qw(cluck);
 
@@ -590,7 +590,6 @@ sub log
     $msg =~ s/[^[:ascii:]]/_/g;
     my $program = $0;
 
-    setlogsock 'unix';
     openlog($program, 'pid', 'local1');
     syslog('info', "%s", $msg);
     closelog();
