@@ -52,6 +52,9 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
+* Fri Jun 06 2014 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 2.0.3-1.ns6
+- signal-event and db: avoid failure when no syslog available - Enhancement #2755
+
 * Mon Mar 24 2014 Davide Principi <davide.principi@nethesis.it> - 2.0.2-1.ns6
 - Bad file descriptor handling in _silent_system function - Bug #2696 [NethServer]
 
