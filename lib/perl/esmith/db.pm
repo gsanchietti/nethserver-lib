@@ -421,7 +421,7 @@ If $key is given but not found in database, integer 1 is returned.
 
 
 sub db_prepare_json {
-    use Data::Dumper;
+
     my ($hash, $key) = @_;
     my @list;
     my @ret = (); 
