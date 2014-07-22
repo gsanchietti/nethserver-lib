@@ -20,6 +20,8 @@
 # along with NethServer.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import print_function
+
 import nethserver.ptrack
 import logging            
 import os
@@ -29,7 +31,12 @@ import json
 import io
 import hashlib
 
-if __name__ == "__main__":
+exit_code = 0
+
+def warning(*objs):
+    print(*objs, file=sys.stderr)
+
+def main(args):
     if("PTRACK_DEBUG" in os.environ):
         logging.getLogger().setLevel(logging.DEBUG)        
 
@@ -41,7 +48,6 @@ if __name__ == "__main__":
 
     state = nethserver.ptrack.ProgressState()
     server = nethserver.ptrack.TrackerServer(socket_path, state, True)
-    exit_code = 0
 
     def on_sigchld(signum, frame):
         global exit_code
@@ -54,14 +60,16 @@ if __name__ == "__main__":
         global exit_code
         oldmask = os.umask(0077)
         dumpfd = io.open('/var/spool/ptrack/%.16s.dump' % hashlib.md5(socket_path).hexdigest(), 'wb')
-        json.dump({'exit_code': exit_code, 'progress': state.query('progress'), 'tasks': state.query('tasks')}, dumpfd); 
+        dumpdata = state.query('tasks')
+        dumpdata['exit_code'] = exit_code
+        json.dump(dumpdata, dumpfd)
         dumpfd.close()
         os.umask(oldmask)
 
     signal.signal(signal.SIGCHLD, on_sigchld)
 
-    if(len(sys.argv) < 2):
-        sys.stderr.write("Listening on path %s\nType ^C to shutdown the server.\n" % socket_path)
+    if(len(args) == 0):
+        warning("Listening on path %s\nType ^C to shutdown the server.\n" % socket_path)
         try:
             server.loop()
         except KeyboardInterrupt:
@@ -74,10 +82,16 @@ if __name__ == "__main__":
         exit(exit_code)
     else:
         server.close()
-        logging.debug("Spawning %s" % sys.argv)
+        logging.debug("Spawning %s" % args)
         try:
-            os.execv(sys.argv[1], sys.argv[1:])
+            os.execv(args[0], args[0:])
         except Exception, e:
-            sys.stderr.write("%s: %s\n" % (sys.argv[1], e))
+            warning("%s: %s" % (args[0], e))
             sys.exit(1)
 
+
+if __name__ == "__main__":
+    if len(sys.argv) > 0:
+        main(sys.argv[1:])
+    else:
+        main([])
