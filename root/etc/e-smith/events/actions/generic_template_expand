@@ -55,6 +55,7 @@ foreach my $filename (@templateList) {
 }
 
 foreach my $filename (@templateList) {
+    my $errorMessage = "";
     # For each file found, read the file to find
     # processTemplate args, then expand the template
     $filename =~ s/^\.//;
@@ -67,10 +68,11 @@ foreach my $filename (@templateList) {
 	    });    
 
     if( ! $result) {
-	warn "[WARNING] expansion of $filename failed\n";
+        $errorMessage = "expansion of $filename failed";
+	warn "[WARNING] " . $errorMessage . "\n";
 	$errors++;
     }
-    $tracker->set_task_done($tasks{$filename}, "", $result ? 0 : 1);
+    $tracker->set_task_done($tasks{$filename}, $errorMessage, $result ? 0 : 1);
 }
 
 exit($errors == 0 ? 0 : 1);
