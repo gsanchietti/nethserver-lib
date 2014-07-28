@@ -41,6 +41,7 @@ foreach (@services) {
 }
 
 foreach (@services) {
+    my $errorMessage = "success";
     # If both Upstart and SysV scripts are present disable SysV:    
     if( -r "/etc/rc.d/init.d/$_" 
 	&& -r "/etc/init/$_.conf" 
@@ -50,9 +51,10 @@ foreach (@services) {
     }
     my $adj = NethServer::Service->new($_, $confDb)->adjust();    
     if( ! $adj) {
+	$errorMessage = "failed";
 	$errors++;
     }
-    $trackerClient->set_task_done($tasks{$_}, undef, $adj ? 0 : 1);
+    $trackerClient->set_task_done($tasks{$_}, $errorMessage, $adj ? 0 : 1);
 }
 
 exit($errors > 0 ? 1 : 0);

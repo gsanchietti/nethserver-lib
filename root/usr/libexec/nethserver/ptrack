@@ -20,8 +20,11 @@
 # along with NethServer.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import print_function
+
 import nethserver.ptrack
-import logging            
+import logging
+import logging.handlers
 import os
 import sys
 import signal
@@ -29,39 +32,70 @@ import json
 import io
 import hashlib
 
-if __name__ == "__main__":
+exit_code = 0
+
+def warning(*objs):
+    print(*objs, file=sys.stderr)
+
+def daemonize():
+    os.closerange(0,2)
+    if os.fork():
+        os._exit(0)            
+    os.setsid()
+
+def main(args):
+
+    logger = logging.getLogger('ptrack')
+    logger.addHandler(logging.handlers.SysLogHandler(address='/dev/log'))
+
+    try:
+        uidata = json.load(sys.stdin)
+    except Exception as e:
+        logger.exception("%s" % e)
+        uidata = False
+
     if("PTRACK_DEBUG" in os.environ):
-        logging.getLogger().setLevel(logging.DEBUG)        
+        logger.setLevel(logging.DEBUG)
+    elif("debug" in uidata and uidata["debug"]):
+        logger.setLevel(logging.DEBUG)
 
     if("PTRACK_SOCKETPATH" in os.environ):
         socket_path = os.environ["PTRACK_SOCKETPATH"]
-    else:
+    elif('socketPath' in uidata):
         socket_path = os.environ["PTRACK_SOCKETPATH"] \
+                      = uidata['socketPath']
+    else:
+        socket_path = environ["PTRACK_SOCKETPATH"] \
                       = '/var/run/ptrack-%d.sock' % os.getpid()
+
+    daemonize()
 
     state = nethserver.ptrack.ProgressState()
     server = nethserver.ptrack.TrackerServer(socket_path, state, True)
-    exit_code = 0
 
     def on_sigchld(signum, frame):
         global exit_code
-        logging.debug("Received signal: %d" % signum)
+        logger.debug("Received signal: %d" % signum)
         exit_code = os.WEXITSTATUS(os.wait()[1])
-        logging.debug("Child exit code: %d" % exit_code)
+        logger.debug("Child exit code: %d" % exit_code)
         server.close()
 
     def dump():
         global exit_code
         oldmask = os.umask(0077)
         dumpfd = io.open('/var/spool/ptrack/%.16s.dump' % hashlib.md5(socket_path).hexdigest(), 'wb')
-        json.dump({'exit_code': exit_code, 'progress': state.query('progress'), 'tasks': state.query('tasks')}, dumpfd); 
+        dumpdata = state.query('tasks')
+        dumpdata['exit_code'] = exit_code
+        dumpdata['ui'] = uidata
+        json.dump(dumpdata, dumpfd)
         dumpfd.close()
         os.umask(oldmask)
 
     signal.signal(signal.SIGCHLD, on_sigchld)
 
-    if(len(sys.argv) < 2):
-        sys.stderr.write("Listening on path %s\nType ^C to shutdown the server.\n" % socket_path)
+    if(len(args) == 0):
+        warning("Listening on path %s\nType ^C to shutdown the server.\n" % socket_path)
+        logger.debug("Listening on %s" % socket_path)
         try:
             server.loop()
         except KeyboardInterrupt:
@@ -74,9 +108,16 @@ if __name__ == "__main__":
         exit(exit_code)
     else:
         server.close()
-        logging.debug("Spawning %s" % sys.argv)
+        logger.debug("Spawning %s" % args)
         try:
-            os.execv(sys.argv[1], sys.argv[1:])
+            os.execv(args[0], args[0:])
         except Exception, e:
-            sys.stderr.write("%s: %s\n" % (sys.argv[1], e))
+            logger.error("%s: %s" % (args[0], e))
+            sys.exit(1)
 
+
+if __name__ == "__main__":
+    if len(sys.argv) > 0:
+        main(sys.argv[1:])
+    else:
+        main([])

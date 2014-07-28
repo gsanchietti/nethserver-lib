@@ -65,8 +65,8 @@ class Task:
 
 class ProgressState:
     
-    def __init__(self):
-        self.tasks = [Task(0, None, 10., 'Root task')]
+    def __init__(self, task_title='Root task'):
+        self.tasks = [Task(0, None, 10., task_title)]
         self.last_taskid = 0
     
     def declare_task(self, parent_id=0, weight=10., title=None):
@@ -113,13 +113,11 @@ class ProgressState:
 
     def query(self, subject='progress'):
         if(subject == 'progress'):
-            last_task = self.tasks[self.last_taskid]
-            return {
-                'progress': self.tasks[0].get_progress(),
-                'last': self.__get_task_map(last_task, False)
-            }
+            root_task = self.__get_task_map(self.tasks[0], False)
+            root_task['last'] = self.__get_task_map(self.tasks[self.last_taskid], False)
+            return root_task
         elif(subject == 'tasks'):
-            return self.__get_task_map(self.tasks[0], True)['children']
+            return self.__get_task_map(self.tasks[0], True)
         else:
             raise Exception("Unknown query subject")
         

@@ -53,6 +53,8 @@ foreach my $service (@services)
 {
     my $s = NethServer::Service->new($service);
 
+    my $errorMessage = "";
+    my $successMessage = "";
     my $action = '';
     my @actions = ();
     my $failed = 0;
@@ -61,7 +63,7 @@ foreach my $service (@services)
     $s->adjust(\$action);
 
     if ($action eq 'start') {
-	warn sprintf("[INFO] %s has been started\n", $service);	
+	$successMessage = sprintf("%s has been started\n", $service);	
 	# Service just started: avoid doing restart or reload again
 	@actions = map { 
 	    my $a = $_; 
@@ -69,10 +71,11 @@ foreach my $service (@services)
 	} get_actions($service);
 
     } elsif ($action eq 'stop') {
-	warn sprintf("[INFO] %s %s and has been stopped\n", $service, get_reason($s));
+	$successMessage = sprintf("%s %s and has been stopped\n", $service, get_reason($s));
 
     } elsif ($s->is_configured() && $s->is_enabled() && $s->is_owned()) {
 	@actions = get_actions($service);
+	$successMessage = sprintf("%s %s", $service, join(", ", @actions));
 
     } else {
 	warn sprintf("[INFO] %s %s: skipped\n", $service, get_reason($s));
@@ -84,14 +87,23 @@ foreach my $service (@services)
 	warn "[INFO] service $service $_\n";
 	$tracker->set_task_progress($tasks{$service}, $progress, $_);
 	if($s->can($_) && ! $s->$_() ) {
-	    warn "[WARNING] service $service $_ failed!\n";
+	    $errorMessage .= sprintf("%s service %s failed!\n", $_, $service);
 	    $errors++;	
 	    $failed = 1;
 	}
 	$progress += 0.1;
     }	    
-    $tracker->set_task_done($tasks{$service}, "", $failed);
-    
+
+    chomp($errorMessage);
+
+    if($failed) {
+	warn "[WARNING] " . $errorMessage . "\n";
+    } else {
+	warn "[INFO] " . $successMessage . "\n";
+    }
+
+    $tracker->set_task_done($tasks{$service}, ($failed ? $errorMessage : $successMessage), $failed);
+
 }
 
 
