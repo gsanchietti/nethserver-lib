@@ -52,6 +52,10 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
+* Wed Aug 20 2014 Davide Principi <davide.principi@nethesis.it> - 2.1.0-1.ns6
+- Embed Nethgui 1.6.0 into httpd-admin RPM - Enhancement #2820 [NethServer]
+- Remove obsolete console and bootstrap-console commands - Enhancement #2734 [NethServer]
+
 * Fri Jun 06 2014 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 2.0.3-1.ns6
 - signal-event and db: avoid failure when no syslog available - Enhancement #2755
 
