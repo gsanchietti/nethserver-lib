@@ -8,7 +8,7 @@ package esmith::db;
 
 use esmith::config;
 use strict;
-
+use Encode qw(encode decode);
 
 =head1 NAME
 
@@ -439,23 +439,21 @@ sub db_prepare_json {
     }
     
     foreach (@list) {
-	my %tmp = ('name' => $_);
-        my $type = db_get_type($hash, $_);
+	my %tmp = ('name' => decode('UTF-8', $_, Encode::FB_DEFAULT));
+        my $type = db_get_type($hash, $_); 
 
 	# Skip empty types:
         if ( ! defined $type) {
 	    next;
         } 
 	
-	$tmp{'type'} =  $type;
+	$tmp{'type'} = decode('UTF-8', $type, Encode::FB_DEFAULT);
 
         my %properties = db_get_prop($hash, $_);
-        
-	# Add properties if present:
-	if( keys %properties)  {
-	    $tmp{'props'} = \%properties;
+	while(my($pk, $pv) = each %properties) {
+	    $tmp{'props'}->{decode('UTF-8', $pk, Encode::FB_DEFAULT)} = decode('UTF-8', $pv, Encode::FB_DEFAULT);
 	}
-
+        
         push(@ret, \%tmp);
     }
 
