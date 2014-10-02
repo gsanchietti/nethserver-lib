@@ -52,6 +52,9 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
+* Thu Oct 02 2014 Davide Principi <davide.principi@nethesis.it> - 2.1.1-1.ns6
+- Cannot access Server Manager after migration - Bug #2786 [NethServer]
+
 * Wed Aug 20 2014 Davide Principi <davide.principi@nethesis.it> - 2.1.0-1.ns6
 - Embed Nethgui 1.6.0 into httpd-admin RPM - Enhancement #2820 [NethServer]
 - Remove obsolete console and bootstrap-console commands - Enhancement #2734 [NethServer]
