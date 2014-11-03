@@ -24,14 +24,13 @@ import struct
 import json
 import logging
 import os
-import atexit
 import traceback
 
 class TrackerServer (asyncore.dispatcher):
     
     backlog = 5
 
-    def __init__(self, path, state, cleanup=False):
+    def __init__(self, path, state):
         self.sockets = {}
         self.path = path
         self.state = state
@@ -40,12 +39,14 @@ class TrackerServer (asyncore.dispatcher):
         logging.debug('Starting listener at %s' % path)
 
         self.create_socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.set_reuse_addr()
+
+        try:
+            os.unlink(self.path)
+        except:
+            pass
+
         self.bind(self.path)
         self.listen(TrackerServer.backlog)
-
-        if(cleanup):
-            atexit.register(self.__unlink_path)
 
     def writable(self):
         return False
@@ -57,31 +58,28 @@ class TrackerServer (asyncore.dispatcher):
             logging.debug('Incoming connection from %s' % repr(addr))
             handler = TaskHandler(sock, self.state, self.sockets)
 
-    def handle_close(self):
-        asyncore.dispatcher.close(self)
+    def loop(self):
+        asyncore.loop(None, True, self.sockets)
 
-    def __unlink_path(self):
+    def close(self):
         try:
             os.unlink(self.path)
         except:
-            return
-        logging.debug("Cleaned up socket file %s" % self.path)
-
-        
-    def loop(self):
-        logging.debug("Starting loop")
-        asyncore.loop(None, True, self.sockets)
-        logging.debug("Loop ends")
-
-    def close(self):
+            pass            
         asyncore.dispatcher.close(self)
         for sock in self.sockets.values():
             try:
                 sock.close()
-            except Exception, e:
+            except Exception as e:
                 logging.exception(traceback.format_exc())
         self.sockets.clear()
-        
+
+    def log(self, message):
+        logging.debug(message)
+
+    def log_info(self, message, type='info'):
+        logging.info("%s: %s" % (type, message))
+
 
 class TaskHandler(asyncore.dispatcher_with_send):
 

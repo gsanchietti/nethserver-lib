@@ -30,90 +30,167 @@ import sys
 import signal
 import json
 import io
-import hashlib
+import optparse
 
-exit_code = 0
-
-def warning(*objs):
+def printerr(*objs):
     print(*objs, file=sys.stderr)
 
+def wait_sigusr1():
+    signal.signal(signal.SIGUSR1, lambda s, t: None)
+    signal.pause()
+
 def daemonize():
-    os.closerange(0,2)
-    if os.fork():
-        os._exit(0)            
-    os.setsid()
-
-def main(args):
-
-    logger = logging.getLogger('ptrack')
-    logger.addHandler(logging.handlers.SysLogHandler(address='/dev/log'))
+    if(os.getppid() == 1):
+        return False
 
     try:
-        uidata = json.load(sys.stdin)
+        if os.fork() > 0:
+            os.wait()
+            sys.exit(0)
+
+        os.umask(0027)
+        os.setsid()
+        os.chdir('/')
+
+        os.closerange(0, 3)
+
+        os.open('/dev/null', os.O_RDONLY)
+        os.open('/dev/null', os.O_WRONLY)
+        os.open('/dev/null', os.O_WRONLY)
+        
+        if os.fork() > 0:
+            wait_sigusr1()
+            sys.exit(0)
+
     except Exception as e:
-        logger.exception("%s" % e)
-        uidata = False
+        sys.stderr.write("%s\n" % e)
+        os._exit(3)
 
-    if("PTRACK_DEBUG" in os.environ):
-        logger.setLevel(logging.DEBUG)
-    elif("debug" in uidata and uidata["debug"]):
-        logger.setLevel(logging.DEBUG)
+    return True
 
-    if("PTRACK_SOCKETPATH" in os.environ):
-        socket_path = os.environ["PTRACK_SOCKETPATH"]
-    elif('socketPath' in uidata):
-        socket_path = os.environ["PTRACK_SOCKETPATH"] \
-                      = uidata['socketPath']
+def get_config(args):
+    parser = optparse.OptionParser(description='Trace task progress and state')
+    parser.add_option('--socketpath', '-s', action='store', default='', help='Server socket path')
+    parser.add_option('--dumppath', '-d', action='store', default='', help='Server dump path')
+    parser.add_option('--logpath', '-l', action='store', default='/dev/log', help='Server socket path')
+    parser.add_option('--daemon', '-D', action='store_true', default=False, help='Daemonize and detach')
+    parser.add_option('--verbose', '-v', action='store_true', default=False, help='Be verbose')
+    parser.add_option('--readjson', '-j', action='store_true', default=False, help='Read ui parameters from stdin')
+    (config, rest) = parser.parse_args(args)
+    return (config, rest)
+
+
+def configure_logging(config):
+    if(config.logpath == '/dev/log'):
+        log_handler = logging.handlers.SysLogHandler(address='/dev/log')
+        log_handler.setFormatter(logging.Formatter("ptrack [%(process)d]: %(levelname)s %(message)s"))
     else:
-        socket_path = environ["PTRACK_SOCKETPATH"] \
-                      = '/var/run/ptrack-%d.sock' % os.getpid()
+        log_handler = logging.FileHandler(config.logpath)
+        log_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s: %(message)s"))
 
-    daemonize()
+    logging.getLogger().addHandler(log_handler)
+    logging.getLogger().setLevel(logging.DEBUG if config.verbose else logging.INFO)
 
+
+def fork_tsk(config, tsk_args):
+    pid = os.fork()
+    if(pid == 0):
+        #logging.debug("Wait for server to become available")
+        os.closerange(0, 8)
+        os.open('/dev/null', os.O_RDONLY)
+        os.open('/dev/null', os.O_WRONLY)
+        os.open('/dev/null', os.O_WRONLY)
+        logging.debug("Spawned pid %d: exec() %s" % (os.getpid(), tsk_args))
+        os.environ['PTRACK_SOCKETPATH'] = config.socketpath
+        try:
+            os.execv(tsk_args[0], tsk_args)
+        except Exception as e:
+            logging.error("%s: %s" % (tsk_args[0], e))
+            sys.exit(1)
+
+        sys.exit(0)
+
+    return pid
+
+def main(args):
+    (config, tsk_args) = get_config(args)
+    configure_logging(config)
+    uidata = {}
+    tsk_pid = 0
+
+    if config.readjson:
+        try:
+            uidata = json.load(sys.stdin)
+        except Exception as e:
+            logging.error("Could not parse uidata from standard input: %s" % e)
+            sys.exit(1)
+
+    if config.daemon:
+        daemonize()
+
+    if(not config.socketpath):
+        config.socketpath = '/var/run/ptrack-%d.sock' % os.getpid()
+
+    if(not config.dumppath):
+        config.dumppath = '/var/spool/ptrack/task-%d.dump' % os.getpid()
+        
+    #
+    # Start the server
+    #
     state = nethserver.ptrack.ProgressState()
-    server = nethserver.ptrack.TrackerServer(socket_path, state, True)
+    server = nethserver.ptrack.TrackerServer(config.socketpath, state)
 
-    def on_sigchld(signum, frame):
-        global exit_code
-        logger.debug("Received signal: %d" % signum)
-        exit_code = os.WEXITSTATUS(os.wait()[1])
-        logger.debug("Child exit code: %d" % exit_code)
-        server.close()
+    if(len(tsk_args) > 0):
+        tsk_pid = fork_tsk(config, tsk_args)
 
-    def dump():
-        global exit_code
-        oldmask = os.umask(0077)
-        dumpfd = io.open('/var/spool/ptrack/%.16s.dump' % hashlib.md5(socket_path).hexdigest(), 'wb')
+    def clean_exit_dump(exit_code=128):
         dumpdata = state.query('tasks')
         dumpdata['exit_code'] = exit_code
+        dumpdata['task_command_line'] = tsk_args
         dumpdata['ui'] = uidata
-        json.dump(dumpdata, dumpfd)
-        dumpfd.close()
-        os.umask(oldmask)
+
+        dfd = io.open(config.dumppath, 'wb')
+        json.dump(dumpdata, dfd, sort_keys=True)
+        dfd.close()
+
+        try:
+            server.close()
+        except Exception as e:
+            logging.error("Error on server close(): %s" % e)
+
+        sys.exit(exit_code)
+
+    def on_sigchld(signum, frame):
+        child_pid, child_status = os.waitpid(tsk_pid, os.WNOHANG)
+        if(tsk_pid == child_pid and os.WIFEXITED(child_status)):
+            tsk_exit_code = os.WEXITSTATUS(child_status)
+            logging.debug("Child %d exited: code: %d, signal: %d" % (child_pid, tsk_exit_code, os.WTERMSIG(child_status)))
+            clean_exit_dump(tsk_exit_code)
+        elif(os.WIFSTOPPED(child_status)):
+            logging.debug("Child %d stopped, status: %d." % (child_pid, os.WSTOPSIG(child_status)))
+        elif(os.WIFSIGNALED(child_status)):
+            logging.debug("Child %d signalled, status: %d." % (child_pid, os.WTERMSIG(child_status)))
+        elif(os.WIFCONTINUED(child_status)):
+            logging.debug("Child %d continued." % (child_pid))
+
+    signal.signal(signal.SIGHUP, lambda s, f: clean_exit_dump(129) )
+    signal.signal(signal.SIGTERM, lambda s, f: clean_exit_dump(130) )
+
+    if config.daemon:
+        # Server ready: notify parent and complete detaching
+        os.kill(os.getppid(), signal.SIGUSR1)
 
     signal.signal(signal.SIGCHLD, on_sigchld)
 
-    if(len(args) == 0):
-        warning("Listening on path %s\nType ^C to shutdown the server.\n" % socket_path)
-        logger.debug("Listening on %s" % socket_path)
-        try:
-            server.loop()
-        except KeyboardInterrupt:
-            sys.stderr.write("\nInterrupted!\n")
-            exit(0)        
-
-    if(os.fork()):
+    # Start to serve:
+    try:
         server.loop()
-        dump()
-        exit(exit_code)
-    else:
-        server.close()
-        logger.debug("Spawning %s" % args)
-        try:
-            os.execv(args[0], args[0:])
-        except Exception, e:
-            logger.error("%s: %s" % (args[0], e))
-            sys.exit(1)
+    except KeyboardInterrupt as e:
+        logging.debug("Keyboard interrupt %s" % e)
+        clean_exit_dump(131)
+    except Exception as e:
+        logging.error("Error %s" % e)
+        clean_exit_dump(132)
 
 
 if __name__ == "__main__":

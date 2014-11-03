@@ -1,3 +1,24 @@
+#
+# Copyright (C) 2014 Nethesis S.r.l.
+# http://www.nethesis.it - support@nethesis.it
+#
+# This script is part of NethServer.
+#
+# NethServer is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License,
+# or any later version.
+#
+# NethServer is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with NethServer.  If not, see .
+#
+
+import time
 
 class StateException(Exception): pass
 
@@ -12,6 +33,9 @@ class Task:
         self.title = title
         self.code = None
         self.identifier = identifier
+        self.ts_created = time.time()
+        self.ts_started = None
+        self.ts_updated = None
 
         if(parent is not None):
             parent.add_children(self)
@@ -31,6 +55,10 @@ class Task:
 
     def set_progress(self, p):
         if(self.progress < p and p <= 1.0):
+            if(self.progress == 0.0):
+                self.ts_started = self.ts_updated = time.time()
+            else:
+                self.ts_updated = time.time()
             self.progress = p
         return self
 
@@ -105,6 +133,9 @@ class ProgressState:
             'message':  task.get_message(), 
             'progress': task.get_progress(),
             'code':     task.get_code(),
+            'ts_created': task.ts_created,
+            'ts_started': task.ts_started,
+            'ts_updated': task.ts_updated,
             'children': map(
                 lambda t: self.__get_task_map(t, recursive), 
                 task.children if recursive else []
