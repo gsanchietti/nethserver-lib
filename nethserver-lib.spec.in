@@ -10,6 +10,7 @@ URL: %{url_prefix}/%{name}
 BuildRequires: nethserver-devtools
 BuildRequires: perl, perl(File::Path)
 
+Requires: cronie
 Requires: dialog
 Requires: perl, perl(Text::Template)
 Requires: perl(Time::HiRes)
@@ -39,6 +40,7 @@ rm -rf $RPM_BUILD_ROOT
 (cd root ; find . -depth -not -name '*.orig' -print | cpio -dump $RPM_BUILD_ROOT)
 rm -f %{name}-%{version}-%{release}-filelist
 %{genfilelist} $RPM_BUILD_ROOT \
+               --ignoredir /etc/cron.d \
                --dir /var/lib/nethserver/db 'attr(2750,root,adm)' \
                --dir /var/spool/ptrack 'attr(1777,root,root)' \
                --dir /var/run/ptrack 'attr(1777,root,root)' \
