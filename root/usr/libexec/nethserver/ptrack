@@ -48,7 +48,6 @@ def daemonize():
             os.wait()
             sys.exit(0)
 
-        os.umask(0027)
         os.setsid()
         os.chdir('/')
 
