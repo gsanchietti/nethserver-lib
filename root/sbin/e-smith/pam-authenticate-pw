@@ -29,11 +29,6 @@ my ($pamh, $res);
 my $userName = <STDIN>;
 chomp($userName);
 
-if($userName eq 'admin' && ! defined getpwnam('admin')) {
-    # fallback to root login if "admin" account is not available:
-    $userName = 'root';
-}
-
 ref($pamh = new Authen::PAM('system-auth', $userName, \&my_conv_func))
 || die "Error code $pamh during PAM init!";
 
