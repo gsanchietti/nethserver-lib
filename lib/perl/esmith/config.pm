@@ -1,8 +1,22 @@
-#----------------------------------------------------------------------
-# Copyright 1999-2003 Mitel Networks Corporation
-# This program is free software; you can redistribute it and/or
-# modify it under the same terms as Perl itself.
-#----------------------------------------------------------------------
+#
+# Copyright (C) 2014 Nethesis S.r.l.
+# http://www.nethesis.it - support@nethesis.it
+#
+# This script is part of NethServer.
+#
+# NethServer is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License,
+# or any later version.
+#
+# NethServer is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with NethServer.
+#
 
 package esmith::config;
 use strict;
@@ -251,7 +265,7 @@ sub _writeconf
         die "Error writing to $filename.$$: $!" unless
         printf FH <<EOF, scalar localtime;
 # DO NOT MODIFY THIS FILE.
-# This file is automatically maintained by the Mitel Networks SME Server
+# This file is automatically maintained by NethServer
 # configuration software.  Manually editing this file may put your 
 # system in an unknown state.
 #
