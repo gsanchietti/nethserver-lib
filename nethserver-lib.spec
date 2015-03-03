@@ -1,7 +1,7 @@
 Name: nethserver-lib
 Summary: NethServer library module
-Version: 2.1.3
-Release: 1
+Version: 2.1.4
+Release: 1%{?dist}
 License: GPL
 Source: %{name}-%{version}.tar.gz
 BuildArch: noarch
@@ -54,6 +54,10 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
+* Tue Mar 03 2015 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 2.1.4-1
+- Cosmetic: change e-smith db header - Enhancement #3029 [NethServer]
+- nethserver-devbox replacements - Feature #3009 [NethServer]
+
 * Thu Nov 27 2014 Davide Principi <davide.principi@nethesis.it> - 2.1.3-1.ns6
 - Permission denied when creating VPN users - Bug #2965 [NethServer]
 
