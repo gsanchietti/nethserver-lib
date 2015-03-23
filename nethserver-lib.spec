@@ -1,6 +1,6 @@
 Name: nethserver-lib
 Summary: NethServer library module
-Version: 2.1.4
+Version: 2.1.5
 Release: 1%{?dist}
 License: GPL
 Source: %{name}-%{version}.tar.gz
@@ -54,6 +54,9 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %changelog
+* Mon Mar 23 2015 Davide Principi <davide.principi@nethesis.it> - 2.1.5-1
+- Server Manager: admin login still possible - #3089 [NethServer]
+
 * Tue Mar 03 2015 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 2.1.4-1
 - Cosmetic: change e-smith db header - Enhancement #3029 [NethServer]
 - nethserver-devbox replacements - Feature #3009 [NethServer]
