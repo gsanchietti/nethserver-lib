@@ -8,18 +8,7 @@ BuildArch: noarch
 URL: %{url_prefix}/%{name}
 
 BuildRequires: nethserver-devtools
-BuildRequires: perl, perl(File::Path)
-
 Requires: cronie
-Requires: dialog
-Requires: perl, perl(Text::Template)
-Requires: perl(Time::HiRes)
-Requires: perl(Authen::PAM), perl(I18N::AcceptLanguage)
-Requires: perl(I18N::LangTags) >= 0.27
-Requires: perl(Net::IPv4Addr) >= 0.10
-Requires: perl(MIME::Base64)
-Requires: perl(Data::UUID)
-Requires: perl-JSON
 
 %description
 Common script libraries for the e-smith system
@@ -28,30 +17,21 @@ Common script libraries for the e-smith system
 %setup
 
 %build
-perl createlinks
-
-# davidep: relocate perl modules under default perl vendorlib directory:
-mkdir -p root%{perl_vendorlib} root%{python_sitelib}
-mv -v lib/perl/* root%{perl_vendorlib}
-mv -v lib/python/* root%{python_sitelib}
+%{__install} -d root%{perl_vendorlib} root%{python_sitelib} 
+cp -av lib/perl/NethServer root%{perl_vendorlib}
+cp -av lib/perl/esmith root%{perl_vendorlib}
+cp -av lib/python/nethserver root%{python_sitelib}
 
 %install
-rm -rf $RPM_BUILD_ROOT
-(cd root ; find . -depth -not -name '*.orig' -print | cpio -dump $RPM_BUILD_ROOT)
-rm -f %{name}-%{version}-%{release}-filelist
-%{genfilelist} $RPM_BUILD_ROOT \
-               --ignoredir /etc/cron.d \
-               --dir /var/lib/nethserver/db 'attr(2750,root,adm)' \
-               --dir /var/spool/ptrack 'attr(1777,root,root)' \
-               --dir /var/run/ptrack 'attr(1777,root,root)' \
-	       >%{name}-%{version}-%{release}-filelist
-echo "%doc COPYING" >> %{name}-%{version}-%{release}-filelist
-
-%clean
-rm -rf $RPM_BUILD_ROOT
+(cd root ; find . -depth -not -name '*.orig' -print | cpio -dump %{buildroot})
+%{genfilelist} %{buildroot} > %{name}-%{version}-%{release}-filelist
+install -d %{buildroot}{/var/spool/ptrack,/var/lib/nethserver/db}
 
 %files -f %{name}-%{version}-%{release}-filelist
 %defattr(-,root,root)
+%doc COPYING
+%dir %attr(2750,root,adm)  /var/lib/nethserver/db
+%dir %attr(1770,root,adm)  /var/spool/ptrack
 
 %changelog
 * Mon Mar 23 2015 Davide Principi <davide.principi@nethesis.it> - 2.1.5-1
