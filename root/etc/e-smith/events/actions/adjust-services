@@ -140,7 +140,7 @@ sub get_actions
     } else {
 	if (open(F, $f)) {
 	    # Read list of actions from the file, and untaint
-	    @actions = map { chomp; /([a-z]+)/ ; $1 } <F>;
+	    @actions = map { chomp; /([a-z]+[12]?)/ ; $1 } <F>;
 	    close(F);
 	} else {
 	    warn "[ERROR] Could not open $f: $!";
