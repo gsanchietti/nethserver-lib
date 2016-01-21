@@ -1,5 +1,0 @@
-#
-# 30script
-#
-exec {$daemon_bin} {$daemon_args}
-
