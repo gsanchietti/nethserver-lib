@@ -6,7 +6,7 @@
 
 package esmith::db;
 
-use esmith::config;
+use NethServer::Database;
 use strict;
 use Encode qw(encode decode);
 
@@ -599,7 +599,7 @@ sub open
         warn "Reading $dataFile into cache\n" if ($esmith::db::DEBUG);
 
         my %db;
-        tie %db, 'esmith::config', $dataFile;
+        tie %db, 'NethServer::Database', $dataFile;
 
         $esmith::db::CACHE{$dataFile} = \%db;   
     }

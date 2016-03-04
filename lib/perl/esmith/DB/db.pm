@@ -13,7 +13,7 @@ use Carp;
 our $VERSION = sprintf '%d.%03d', q$Revision: 1.29 $ =~ /: (\d+).(\d+)/;
 
 use esmith::db;
-use esmith::config;
+use NethServer::Database;
 use esmith::DB::db::Record;
 use esmith::DB;
 our @ISA = qw(esmith::DB);
@@ -87,7 +87,7 @@ sub create
         croak "File exists" if -e $file;
 
         $self->{config} = $self->_get_config($file)
-          || croak "Can't get the esmith::config object";
+          || croak "Can't get the database object";
 
         # touch the config file so it gets created immediately
         open( FILE, ">>$file" )
@@ -251,7 +251,7 @@ sub _open
         die "File isn't readable\n" unless -r $file;
 
         $self->{config} = $self->_get_config($file)
-          || die "Can't get the esmith::config object";
+          || die "Can't get the database object";
     };
     if ($@)
     {
@@ -491,7 +491,7 @@ ok( !(grep { $_->prop('flavor') ne 'old fashion' } @records),
 
 sub tie_class
 {
-    return 'esmith::config';
+    return 'NethServer::Database';
 }
 
 sub close

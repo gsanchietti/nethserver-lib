@@ -14,7 +14,7 @@ our @EXPORT_OK = qw(removeBlankLines);
 
 use Text::Template 'fill_in_file';
 use Errno;
-use esmith::config;
+use esmith::ConfigDB;
 use esmith::db;
 use vars '$TEMPLATE_COUNT';
 
