@@ -29,9 +29,9 @@ sub TIEHASH {
 }
 
 sub FETCH {
-    my $self = shift;    
+    my $self = shift;
     my $key = shift;
-    my @pwent = getpwnam($key);    
+    my @pwent = getpwnam($key);
     if( ! @pwent) {
         return undef;
     }
@@ -43,7 +43,7 @@ sub FETCH {
         if(defined $H{$_}) {
             $value .= '|' . $_ . '|' . $H{$_};
         }
-    }    
+    }
     return $value;
 }
 

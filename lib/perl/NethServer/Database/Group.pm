@@ -29,21 +29,21 @@ sub TIEHASH {
 }
 
 sub FETCH {
-    my $self = shift;    
+    my $self = shift;
     my $key = shift;
-    my @grent = getgrnam($key);    
+    my @grent = getgrnam($key);
     if( ! @grent) {
         return undef;
     }
     my @fields = qw(name passwd gid members);
     my %H = ();
-    @H{@fields} = @grent;    
+    @H{@fields} = @grent;
     my $value = 'group';
     foreach (keys %H) {
         if(defined $H{$_}) {
             $value .= '|' . $_ . '|' . $H{$_};
         }
-    }    
+    }
     return $value;
 }
 
