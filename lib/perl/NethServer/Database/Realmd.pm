@@ -45,12 +45,12 @@ sub FETCH {
         return undef;
     }
 
-    my $realm = $self->{'service'}->get_object($key);
+    my $realm = $self->_get_object($key);
     my $value = 'realmd';
 
-    foreach (qw(RealmName DomainName Name )) {
-        $value .= '|' . $_ . '|' . $realm->$_;
-    }
+    $value .= '|RealmName|' . $realm->RealmName;
+    $value .= '|DomainName|' . $realm->DomainName;
+    $value .= '|Details|' . (join(',', map { $_->[0] . ':' . $_->[1] } @{$realm->Details}));
 
     return $value;
 }
@@ -73,10 +73,22 @@ sub NEXTKEY {
     return $v;
 }
 
+sub _get_object {
+    my $self = shift;
+    my $key = shift;
+    foreach (@{$self->{'service'}->get_object("/org/freedesktop/realmd/Sssd")->Realms}) {
+        my $o = $self->{'service'}->get_object($_);
+        if($o->Name eq $key) {
+            return $o;
+        }
+    }
+    return undef;
+}
+
 sub _get_keys {
     my $self = shift;
     my $key = shift;
-    return $self->{'service'}->get_object("/org/freedesktop/realmd/Sssd")->Realms;
+    return [map {$self->{'service'}->get_object($_)->Name} @{$self->{'service'}->get_object("/org/freedesktop/realmd/Sssd")->Realms}];
 }
 
 1;
