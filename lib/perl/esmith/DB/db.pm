@@ -417,7 +417,6 @@ sub new_record
     }
     my $type = exists $props->{type} ? delete $props->{type} : '';
     db_set( $self->{config}, $key, $type, $props );
-    $self->tie_class->_writeconf($self->{file}, $self->{config});
 
     return esmith::DB::db::Record->_construct( $self, $key, $self->{config} );
 }
