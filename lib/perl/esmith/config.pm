@@ -23,11 +23,14 @@ use strict;
 use vars qw($VERSION);
 $VERSION = 1.45;
 
+use Sys::Hostname;
+use Net::DBus;
 use Sys::Syslog qw(:DEFAULT);
 use Fcntl qw(:DEFAULT :flock);
 use Carp qw(cluck);
 
 my $Default_Config = '/var/lib/nethserver/db/configuration';
+my $bus = Net::DBus->system();
 
 =pod
 
@@ -218,6 +221,16 @@ sub _readconf
     }
 
     close(FH);
+
+    if($filename eq $Default_Config) {
+        # !!!FIXME!!! configuration DB overrides
+        my ($systemName, $domainName) = split(/\./, Sys::Hostname::hostname(), 2);
+        $config{'SystemName'} = $systemName || '';
+        $config{'DomainName'} = $domainName || '';
+        my $service = $bus->get_service("org.freedesktop.timedate1");
+        my $object = $service->get_object('/org/freedesktop/timedate1');
+        $config{'TimeZone'} = $object->Timezone;
+    }
 
     return \%config;
 }

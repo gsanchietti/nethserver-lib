@@ -12,7 +12,6 @@ use Text::Template 'fill_in_file';
 use POSIX qw (setsid);
 use Errno;
 use Carp;
-use esmith::config;
 use esmith::db;
 use esmith::DB;
 use esmith::ConfigDB;
