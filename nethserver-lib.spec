@@ -1,6 +1,6 @@
 Name: nethserver-lib
 Summary: NethServer library module
-Version: 2.1.5
+Version: 2.2.0
 Release: 1%{?dist}
 License: GPL
 Source: %{name}-%{version}.tar.gz
@@ -34,6 +34,9 @@ install -d %{buildroot}{/var/spool/ptrack,/var/lib/nethserver/db}
 %dir %attr(1770,root,adm)  /var/spool/ptrack
 
 %changelog
+* Thu Jul 07 2016 Stefano Fancello <stefano.fancello@nethesis.it> - 2.2.0-1
+- First NS7 release
+
 * Mon Mar 23 2015 Davide Principi <davide.principi@nethesis.it> - 2.1.5-1
 - Server Manager: admin login still possible - #3089 [NethServer]
 
