@@ -530,6 +530,24 @@ sub backgroundCommand ($@)
 
 =pod
 
+=head1 HASH UTILITIES
+
+=head2 genRandomHash()
+
+Returns a random generated sha1 hash using urandom.
+Returns undef if the hash could not be generated/retrieved.
+
+
+=cut
+
+sub genRandomHash
+{
+    return NethServer::Password->new(undef, {'symbols' => ['a'..'f', '0'..'9'], 'length' => 40})->getAscii();
+}
+
+
+=pod
+
 =head1 SERVICE MANAGEMENT UTILITIES
 
 =head2 serviceControl()
