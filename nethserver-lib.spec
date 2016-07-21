@@ -1,6 +1,6 @@
 Name: nethserver-lib
 Summary: NethServer library module
-Version: 2.2.0
+Version: 2.2.1
 Release: 1%{?dist}
 License: GPL
 Source: %{name}-%{version}.tar.gz
@@ -34,6 +34,9 @@ install -d %{buildroot}{/var/spool/ptrack,/var/lib/nethserver/db}
 %dir %attr(1770,root,adm)  /var/spool/ptrack
 
 %changelog
+* Thu Jul 21 2016 Stefano Fancello <stefano.fancello@nethesis.it> - 2.2.1-1
+- Undefined subroutine &esmith::util::genRandomHash - Bug NethServer/dev#5057
+
 * Thu Jul 07 2016 Stefano Fancello <stefano.fancello@nethesis.it> - 2.2.0-1
 - First NS7 release
 
