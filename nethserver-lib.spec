@@ -1,6 +1,6 @@
 Name: nethserver-lib
 Summary: NethServer library module
-Version: 2.2.1
+Version: 2.2.2
 Release: 1%{?dist}
 License: GPL
 Source: %{name}-%{version}.tar.gz
@@ -34,6 +34,9 @@ install -d %{buildroot}{/var/spool/ptrack,/var/lib/nethserver/db}
 %dir %attr(1770,root,adm)  /var/spool/ptrack
 
 %changelog
+* Fri Mar 10 2017 Davide Principi <davide.principi@nethesis.it> - 2.2.2-1
+- Avoid warning from esmith::util::isValidIP() -- NethServer/nethserver-lib#4
+
 * Thu Jul 21 2016 Stefano Fancello <stefano.fancello@nethesis.it> - 2.2.1-1
 - Undefined subroutine &esmith::util::genRandomHash - Bug NethServer/dev#5057
 
