@@ -249,8 +249,8 @@ sub adjust
     my $action = shift;
     my $errors = 0;
 
-    if($self->is_configured()) {
-	my $staticState = $self->is_owned() && $self->is_enabled();
+    if($self->is_configured() && $self->is_owned()) {
+	my $staticState = $self->is_enabled();
         $errors += system('systemctl', '-q', $staticState ? 'enable' : 'disable', $self->{'serviceName'});
 	if($staticState != $self->is_running()) {
 	    if(system('systemctl', $staticState ? 'start' : 'stop', $self->{'serviceName'}) == 0) {
