@@ -42,13 +42,6 @@ foreach (@services) {
 
 foreach (@services) {
     my $errorMessage = "success";
-    # If both Upstart and SysV scripts are present disable SysV:    
-    if( -r "/etc/rc.d/init.d/$_" 
-	&& -r "/etc/init/$_.conf" 
-	&& system("/sbin/chkconfig", $_) == 0) {
-	system("/sbin/service", $_, "stop") == 0 or $errors++;
-	system("/sbin/chkconfig", $_, "off") == 0 or $errors++;    
-    }
     my $adj = NethServer::Service->new($_, $confDb)->adjust();    
     if( ! $adj) {
 	$errorMessage = "failed";
