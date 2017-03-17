@@ -249,9 +249,9 @@ sub adjust
     my $action = shift;
     my $errors = 0;
 
-    if($self->is_configured() && $self->is_owned()) {
-	my $staticState = $self->is_enabled();
-        $errors += system('systemctl', '-q', $staticState ? 'enable' : 'disable', $self->{'serviceName'});
+    if($self->is_configured()) {
+	my $staticState = $self->is_enabled() && $self->is_owned();
+	system(sprintf('systemctl -q %s "%s" 2>/dev/null', ($staticState ? 'enable' : 'disable'), $self->{'serviceName'}));
 	if($staticState != $self->is_running()) {
 	    if(system('systemctl', $staticState ? 'start' : 'stop', $self->{'serviceName'}) == 0) {
 	        $$action = $staticState ? 'start' : 'stop';
