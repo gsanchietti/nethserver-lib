@@ -1,6 +1,6 @@
 Name: nethserver-lib
 Summary: NethServer library module
-Version: 2.2.2
+Version: 2.2.3
 Release: 1%{?dist}
 License: GPL
 Source: %{name}-%{version}.tar.gz
@@ -34,6 +34,9 @@ install -d %{buildroot}{/var/spool/ptrack,/var/lib/nethserver/db}
 %dir %attr(1770,root,adm)  /var/spool/ptrack
 
 %changelog
+* Tue Apr 04 2017 Davide Principi <davide.principi@nethesis.it> - 2.2.3-1
+- Runlevel-adjust fails if service not exists - Bug NethServer/dev#5243
+
 * Fri Mar 10 2017 Davide Principi <davide.principi@nethesis.it> - 2.2.2-1
 - Avoid warning from esmith::util::isValidIP() -- NethServer/nethserver-lib#4
 
