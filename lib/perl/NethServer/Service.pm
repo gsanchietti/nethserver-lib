@@ -229,6 +229,22 @@ sub is_running
     return system('systemctl', '-q', 'is-active', $self->{'serviceName'}) == 0;
 }
 
+=head2 ->is_masked
+
+Check if the service unit is in "masked" state. See systemctl manpage.
+
+=cut
+sub is_masked
+{
+    my $self = shift;
+    my $unitName = $self->{'serviceName'};
+    my $output = qx(systemctl show --property=LoadState $unitName);
+    if($output =~ /^LoadState=masked$/) {
+        return 1;
+    }
+    return 0;
+}
+
 =head2 ->adjust
 
 Adjust the service startup state and running state according to its
