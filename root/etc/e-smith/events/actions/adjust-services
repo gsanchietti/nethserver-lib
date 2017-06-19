@@ -86,7 +86,7 @@ foreach my $service (@services)
     foreach (@actions) {
 	warn "[INFO] service $service $_\n";
 	$tracker->set_task_progress($tasks{$service}, $progress, $_);
-	if($s->can($_) && ! $s->$_() ) {
+	if($s->can($_) && ! $s->$_() && ! $s->is_masked()) {
 	    $errorMessage .= sprintf("%s service %s failed!\n", $_, $service);
 	    $errors++;	
 	    $failed = 1;
