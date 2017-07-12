@@ -1,6 +1,6 @@
 Name: nethserver-lib
 Summary: NethServer library module
-Version: 2.2.4
+Version: 2.2.5
 Release: 1%{?dist}
 License: GPL
 Source: %{name}-%{version}.tar.gz
@@ -34,6 +34,9 @@ install -d %{buildroot}{/var/spool/ptrack,/var/lib/nethserver/db}
 %dir %attr(1770,root,adm)  /var/spool/ptrack
 
 %changelog
+* Wed Jul 12 2017 Davide Principi <davide.principi@nethesis.it> - 2.2.5-1
+- Backup config history - NethServer/dev#5314
+
 * Wed Jun 14 2017 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 2.2.4-1
 - Add db setjson command
 
