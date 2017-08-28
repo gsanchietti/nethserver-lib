@@ -265,7 +265,7 @@ sub adjust
     my $action = shift;
     my $errors = 0;
 
-    if($self->is_configured()) {
+    if($self->is_configured() && ! $self->is_masked() ) {
 	my $staticState = $self->is_enabled() && $self->is_owned();
 	system(sprintf('systemctl -q %s "%s" 2>/dev/null', ($staticState ? 'enable' : 'disable'), $self->{'serviceName'}));
 	if($staticState != $self->is_running()) {

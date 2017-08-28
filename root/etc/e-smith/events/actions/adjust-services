@@ -71,22 +71,26 @@ foreach my $service (@services)
 	} get_actions($service);
 
     } elsif ($action eq 'stop') {
-	$successMessage = sprintf("%s %s and has been stopped\n", $service, get_reason($s));
+	$successMessage = sprintf("service %s %s and has been stopped\n", $service, get_reason($s));
 
-    } elsif ($s->is_configured() && $s->is_enabled() && $s->is_owned()) {
+    } elsif ($s->is_configured() && $s->is_enabled() && $s->is_owned() && ! $s->is_masked() ) {
 	@actions = get_actions($service);
-	$successMessage = sprintf("%s %s", $service, join(", ", @actions));
+	$successMessage = sprintf("service %s %s", $service, join(", ", @actions));
 
     } else {
-	warn sprintf("[INFO] %s %s: skipped\n", $service, get_reason($s));
+	warn sprintf("[INFO] service %s %s: skipped\n", $service, get_reason($s));
 
+    }
+
+    chomp($successMessage);
+    if($successMessage) {
+        warn "[INFO] " . $successMessage . "\n";
     }
 
     my $progress = 0.1;
     foreach (@actions) {
-	warn "[INFO] service $service $_\n";
 	$tracker->set_task_progress($tasks{$service}, $progress, $_);
-	if($s->can($_) && ! $s->$_() && ! $s->is_masked()) {
+	if($s->can($_) && ! $s->$_() ) {
 	    $errorMessage .= sprintf("%s service %s failed!\n", $_, $service);
 	    $errors++;	
 	    $failed = 1;
@@ -95,11 +99,8 @@ foreach my $service (@services)
     }	    
 
     chomp($errorMessage);
-
-    if($failed) {
+    if($failed && $errorMessage) {
 	warn "[WARNING] " . $errorMessage . "\n";
-    } else {
-	warn "[INFO] " . $successMessage . "\n";
     }
 
     $tracker->set_task_done($tasks{$service}, ($failed ? $errorMessage : $successMessage), $failed);
@@ -119,6 +120,8 @@ sub get_reason
 	$r = "is not configured";
     } elsif( ! $s->is_owned()) {
 	$r = "is not owned by any package";
+    } elsif( $s->is_masked()) {
+	$r = "is masked";
     } elsif( ! $s->is_enabled()) {
 	$r = "is disabled";
     } else {
