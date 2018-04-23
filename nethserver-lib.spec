@@ -1,6 +1,6 @@
 Name: nethserver-lib
 Summary: NethServer library module
-Version: 2.2.6
+Version: 2.2.7
 Release: 1%{?dist}
 License: GPL
 Source: %{name}-%{version}.tar.gz
@@ -34,6 +34,9 @@ install -d %{buildroot}{/var/spool/ptrack,/var/lib/nethserver/db}
 %dir %attr(1770,root,adm)  /var/spool/ptrack
 
 %changelog
+* Mon Apr 23 2018 Davide Principi <davide.principi@nethesis.it> - 2.2.7-1
+- Upgrade rspamd to 1.7.3 - NethServer/dev#5437
+
 * Fri Sep 08 2017 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 2.2.6-1
 - NS 6 upgrade: avoid restore-data when possible - NethServer/dev#5343
 - Support masked unit
