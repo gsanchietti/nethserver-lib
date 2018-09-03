@@ -159,7 +159,7 @@ sub event_signal
         }
         $log .= " [$elapsedTime]";
 	print LOG $log;
-        _log_json({"event" => $event, "time" => $elapsedTime, "action" => $handlers{$handler}, "exit" => $status, "state" => "done", "step" => $i});
+        _log_json({"event" => $event, "time" => $elapsedTime, "action" => $handlers{$handler}, "exit" => $status, "state" => "done", "step" => $i, "progress" => sprintf("%.2f", $i/$steps)});
 
 	$tracker->set_task_done($tasks{$handler}, "", $status);
         $i++;
