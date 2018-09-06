@@ -11,8 +11,11 @@ use Getopt::Long;
 use esmith::event;
 use Env qw(LANG LANGUAGE);
 
+my $json = 0;
+GetOptions ("json" => \$json);
+
 my $usage = "usage:
-    $0 eventname [arg1 [arg2...]]
+    $0 eventname [--json] [arg1 [arg2...]]
 ";
 
 my ($event, @args) = @ARGV;
@@ -25,6 +28,7 @@ $LANG='en_US.utf8';
 delete $ENV{LANGUAGE};
 delete $ENV{$_} foreach grep(m/^LC_.+/, keys %ENV);
 
+set_json_log($json);
 my $exitcode = event_signal($event, @args);
 
 

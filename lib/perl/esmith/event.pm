@@ -29,6 +29,7 @@ use Time::HiRes qw( usleep ualarm gettimeofday tv_interval );
 use esmith::Logger;
 use File::Basename;
 use NethServer::TrackerClient;
+use JSON;
 
 =pod
 
@@ -48,13 +49,28 @@ esmith::event - Routines for handling e-smith events
 
 our $VERSION = sprintf '%d.%03d', q$Revision: 1.16 $ =~ /: (\d+).(\d+)/;
 our @ISA         = qw(Exporter);
-our @EXPORT      = qw(event_signal);
+our @EXPORT      = qw(event_signal set_json_log);
 
 our @EXPORT_OK   = ();
 our %EXPORT_TAGS = ();
 our $return_value = undef;
+our $json = 0;
 
 tie *LOG, 'esmith::Logger', 'esmith::event';
+
+sub set_json_log
+{
+    $json = shift;
+}
+
+sub _log_json
+{
+    my $hash = shift;
+    if ($json) {
+        $hash->{'pid'} = $$;
+        print encode_json($hash)."\n";
+    }
+}
 
 sub event_signal
 {
@@ -107,18 +123,22 @@ sub event_signal
 	$tasks{$handler} = $tracker->declare_task(basename $handler);
     }
 
+    my $steps = scalar @handlerList;
     #------------------------------------------------------------
     # Execute all handlers, sending any output to the system log.
     #
     # Relevant messages are tracked by NethServer::TrackerClient
     #------------------------------------------------------------
     print LOG "Event: $event @args";
+    _log_json({"event" => $event, "args" => join(",",@args), "steps" =>  $steps});
 
     #------------------------------------------------------------
     # Run handlers, logging all output.
     #------------------------------------------------------------
+    my $i = 1;
     foreach my $handler (@handlerList) {
-	#print LOG "Running event handler " . $handlers{$handler};	    
+	#print LOG "Running event handler " . $handlers{$handler};
+        _log_json({"event" => $event, "action" => $handlers{$handler}, "state" => "running", "step" => $i});
         my $startTime = [gettimeofday];
 	my $status = _mysystem(\*LOG, $handler, $event, \%tasks, @args);
 	if($status != 0) {
@@ -139,13 +159,18 @@ sub event_signal
         }
         $log .= " [$elapsedTime]";
 	print LOG $log;
+        _log_json({"event" => $event, "time" => $elapsedTime, "action" => $handlers{$handler}, "exit" => $status, "state" => "done", "step" => $i, "progress" => sprintf("%.2f", $i/$steps)});
+
 	$tracker->set_task_done($tasks{$handler}, "", $status);
+        $i++;
     }
 
     if (!$isSuccess) {
         print LOG "Event: $event FAILED";
+        _log_json({ "event" => $event, "status" => "failed"});
     } else {
         print LOG "Event: $event SUCCESS";
+        _log_json({"event" => $event, "status" => "success"});
     }
     return $isSuccess;
 }
