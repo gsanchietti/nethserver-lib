@@ -1,6 +1,6 @@
 Name: nethserver-lib
 Summary: NethServer library module
-Version: 2.2.9
+Version: 2.2.10
 Release: 1%{?dist}
 License: GPL
 Source: %{name}-%{version}.tar.gz
@@ -34,6 +34,9 @@ install -d %{buildroot}{/var/spool/ptrack,/var/lib/nethserver/db}
 %dir %attr(1770,root,adm)  /var/spool/ptrack
 
 %changelog
+* Fri Feb 22 2019 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 2.2.10-1
+- Avoid using D-Bus in esmith db library - NethServer/dev#5718
+
 * Tue Oct 30 2018 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 2.2.9-1
 - signal-event: enable json output - NethServer/nethserver-lib#15
 
