@@ -24,7 +24,6 @@ use vars qw($VERSION);
 $VERSION = 1.45;
 
 use Sys::Hostname;
-use NethServer::TimeZone;
 use Sys::Syslog qw(:DEFAULT);
 use Fcntl qw(:DEFAULT :flock);
 use Carp qw(cluck);
@@ -226,7 +225,13 @@ sub _readconf
         my ($systemName, $domainName) = split(/\./, Sys::Hostname::hostname(), 2);
         $config{'SystemName'} = $systemName || '';
         $config{'DomainName'} = $domainName || '';
-        tie $config{'TimeZone'}, 'NethServer::TimeZone', '';
+        if ( -l '/etc/localtime' ) {
+            my $timeZone = readlink('/etc/localtime');
+            $timeZone =~ s|^(\.\.)?/usr/share/zoneinfo/||;
+            $config{'TimeZone'} = $timeZone;
+        } else {
+            $config{'TimeZone'} = 'UTC';
+        }
     }
 
     return \%config;
