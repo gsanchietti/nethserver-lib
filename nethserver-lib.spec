@@ -1,6 +1,6 @@
 Name: nethserver-lib
 Summary: NethServer library module
-Version: 2.2.10
+Version: 2.2.11
 Release: 1%{?dist}
 License: GPL
 Source: %{name}-%{version}.tar.gz
@@ -34,6 +34,9 @@ install -d %{buildroot}{/var/spool/ptrack,/var/lib/nethserver/db}
 %dir %attr(1770,root,adm)  /var/spool/ptrack
 
 %changelog
+* Wed May 22 2019 Davide Principi <davide.principi@nethesis.it> - 2.2.11-1
+- Bogus full name field with dash symbol - Bug NethServer/dev#5764
+
 * Fri Feb 22 2019 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 2.2.10-1
 - Avoid using D-Bus in esmith db library - NethServer/dev#5718
 
