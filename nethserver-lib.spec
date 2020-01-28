@@ -8,6 +8,7 @@ BuildArch: noarch
 URL: %{url_prefix}/%{name}
 
 BuildRequires: nethserver-devtools
+BuildRequires:  perl-generators
 Requires: cronie
 
 %description
@@ -17,10 +18,10 @@ Common script libraries for the e-smith system
 %setup
 
 %build
-%{__install} -d root%{perl_vendorlib} root%{python_sitelib} 
+%{__install} -d root%{perl_vendorlib} root%{python2_sitelib}
 cp -av lib/perl/NethServer root%{perl_vendorlib}
 cp -av lib/perl/esmith root%{perl_vendorlib}
-cp -av lib/python/nethserver root%{python_sitelib}
+cp -av lib/python/nethserver root%{python2_sitelib}
 
 %install
 (cd root ; find . -depth -not -name '*.orig' -print | cpio -dump %{buildroot})
